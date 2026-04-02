@@ -35,26 +35,33 @@ public class LevelLoader {
         JsonObject levelObject = GsonUtil.parse(string);
         if(levelObject.get("data_version").getAsInt() != GameConstants.DATA_VERSION) throw new IllegalStateException("TODO");
         levelObject.get("objects").getAsJsonArray().forEach((jsonElement -> {
-            JsonObject data = jsonElement.getAsJsonObject();
+            create(jsonElement.getAsJsonObject(), out);
 
-            String type = data.get("type").getAsString();
-            AbstractObject object = null;
-            if(type == "sprite") {
-                object = new StaticObject(data.get("sprite").getAsString(), data.get("scale").getAsFloat());
-            } else if(type == "monster") {
-
-            }else if(type == "rar") {
-
-            } else {
-                throw new IllegalStateException("Invalid type");
-            }
-
-            object.init(out);
-
-            object.setPos(new Vector2(data.get("x").getAsFloat(), data.get("y").getAsFloat()));
-            object.setUuid(UUID.fromString(data.get("uuid").getAsString()));
         }));
-        return null;
+        return out;
+    }
+
+    private static void create(JsonObject data, Level out) {
+        String type = data.get("type").getAsString();
+        AbstractObject object = null;
+
+        JsonObject customData = data.get("custom_data").getAsJsonObject();
+        if(type.equals("sprite")) {
+            object = new StaticObject(customData.get("sprite").getAsString(), customData.get("scale").getAsFloat());
+        } else if(type.equals("monster")) {
+
+        }else if(type.equals("rar")) {
+
+        } else if(type.equals("player")) {
+            return;
+        } else {
+            throw new IllegalStateException("Invalid type '"+type+"'");
+        }
+
+        object.init(out);
+
+        object.setPos(new Vector2(data.get("x").getAsFloat(), data.get("y").getAsFloat()));
+        object.setUuid(UUID.fromString(data.get("uuid").getAsString()));
     }
 
     public static String saveLevel(Level level) {

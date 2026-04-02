@@ -32,9 +32,9 @@ public class Main extends Game {
         GameConstants.player = new Player();
         GameConstants.player.init(GameConstants.level);
         GameConstants.player.setPos(new Vector2(3, 3));
-        StaticObject wall = new StaticObject("16x");
-        GameConstants.level.addObject(wall);
-        wall.setPos(Vector2.One);
+//        StaticObject wall = new StaticObject("16x");
+//        GameConstants.level.addObject(wall);
+//        wall.setPos(Vector2.One);
     }
 
     @Override
