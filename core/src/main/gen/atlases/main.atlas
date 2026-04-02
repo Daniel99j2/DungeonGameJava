@@ -1,0 +1,53 @@
+
+main.png
+size: 1024, 1024
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+16x
+  rotate: false
+  xy: 2, 2
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+background
+  rotate: false
+  xy: 2, 20
+  size: 512, 512
+  orig: 512, 512
+  offset: 0, 0
+  index: -1
+uiskin
+  rotate: false
+  xy: 2, 20
+  size: 512, 512
+  orig: 512, 512
+  offset: 0, 0
+  index: -1
+
+main2.png
+size: 1024, 1024
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+player
+  rotate: false
+  xy: 2, 2
+  size: 512, 512
+  orig: 512, 512
+  offset: 0, 0
+  index: -1
+
+main3.png
+size: 1024, 1024
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+test
+  rotate: false
+  xy: 2, 2
+  size: 512, 512
+  orig: 512, 512
+  offset: 0, 0
+  index: -1

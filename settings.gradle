@@ -7,4 +7,4 @@ plugins {
 // if you want to temporarily disable a subproject.
 //include 'lwjgl3', 'core'
 
-include 'main'
+include 'core', 'lwjgl3'

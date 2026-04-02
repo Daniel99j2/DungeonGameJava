@@ -1,96 +1,76 @@
-plugins {
-  id 'java'
-  id 'eclipse'
-  id 'idea'
-  id 'org.graalvm.buildtools.native' version '0.9.28' // GraalVM plugin (if you need native images)
-}
+buildscript {
+  repositories {
+    mavenCentral()
+    gradlePluginPortal()
+    mavenLocal()
+    google()
+    maven { url = 'https://central.sonatype.com/repository/maven-snapshots/' }
+    maven { url = 'https://dj.ucc.asn.au/maven/' }
+  }
+  dependencies {
 
-group = 'com.yourname'
-version = '1.0.0'
 
-java {
-  sourceCompatibility = JavaVersion.VERSION_21
-  targetCompatibility = JavaVersion.VERSION_21
-
-  toolchain {
-    languageVersion = JavaLanguageVersion.of(21)
   }
 }
 
-repositories {
-  mavenCentral()
-  mavenLocal()
-  maven { url = 'https://jitpack.io' }
-  maven { url = 'https://central.sonatype.com/repository/maven-snapshots/' }
-  google()
-}
+allprojects {
+  apply plugin: 'eclipse'
+  apply plugin: 'idea'
 
-dependencies {
-  // Core LibGDX dependencies
-  implementation "com.badlogicgames.gdx:gdx:1.11.0"
-  implementation "com.badlogicgames.gdx:gdx-box2d:1.11.0"
-  implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:1.11.0"
-  implementation "com.badlogicgames.box2dlights:box2dlights:1.5"
-  implementation "com.badlogicgames.gdx:gdx-tools:1.11.0"
-  // Native libraries (if you plan to use them, include gdx-platform)
-  implementation "com.badlogicgames.gdx:gdx-platform:1.11.0:natives-desktop"
-  implementation "org.lwjgl:lwjgl:3.3.1"  // Check for latest version
-  implementation "org.lwjgl:lwjgl-glfw:3.3.1"  // And any other related LWJGL modules
-
-
-  // Compile-only dependencies
-  compileOnly 'org.jetbrains:annotations:26.0.2'
-}
-
-tasks.withType(JavaCompile).configureEach {
-  options.encoding = 'UTF-8'
-  options.incremental = true
-}
-
-// Optional: Generate assets.txt automatically for use in your native image build or resources configuration
-tasks.register('generateAssetList') {
-  def assetsFolder = file("${projectDir}/assets")
-  def assetsFile = new File(assetsFolder, "assets.txt")
-
-  inputs.dir(assetsFolder)
-  doLast {
-    assetsFile.delete()
-    fileTree(assetsFolder).collect { assetsFolder.toPath().relativize(it.toPath()).toString() }
-      .sort()
-      .each { assetsFile.append(it + "\n") }
-  }
-}
-
-tasks.processResources {
-  dependsOn tasks.generateAssetList
-}
-
-// GraalVM Native Image Configuration (if you're building a native image)
-graalvmNative {
-  binaries {
-    main {
-      imageName = 'DungeonGame'
-      mainClass = 'com.yourname.DungeonGameMain' // Set the main class of your game
-      requiredVersion = '23.0'
-      buildArgs.add("-march=compatibility")
-      jvmArgs.addAll("-Dfile.encoding=UTF8")
-      sharedLibrary = false  // Set to false if you're not building a shared library
-      resources.autodetect()
+  // This allows you to "Build and run using IntelliJ IDEA", an option in IDEA's Settings.
+  idea {
+    module {
+      outputDir = file('build/classes/java/main')
+      testOutputDir = file('build/classes/java/test')
     }
   }
 }
 
-// IDEA plugin configuration
-idea {
-  module {
-    outputDir = file('build/classes/java/main')
-    testOutputDir = file('build/classes/java/test')
+configure(subprojects) {
+  apply plugin: 'java-library'
+  java.sourceCompatibility = 21
+
+  java {
+    toolchain {
+      languageVersion = JavaLanguageVersion.of(21)
+    }
+  }
+
+  // From https://lyze.dev/2021/04/29/libGDX-Internal-Assets-List/
+  // The article can be helpful when using assets.txt in your project.
+  tasks.register('generateAssetList') {
+    inputs.dir("${project.rootDir}/assets/")
+    // projectFolder/assets
+    File assetsFolder = new File("${project.rootDir}/assets/")
+    // projectFolder/assets/assets.txt
+    File assetsFile = new File(assetsFolder, "assets.txt")
+    // delete that file in case we've already created it
+    assetsFile.delete()
+
+    // iterate through all files inside that folder
+    // convert it to a relative path
+    // and append it to the file assets.txt
+    fileTree(assetsFolder).collect { assetsFolder.relativePath(it) }.sort().each {
+      assetsFile.append(it + "\n")
+    }
+  }
+  processResources.dependsOn 'generateAssetList'
+
+  compileJava {
+    options.incremental = true
   }
 }
 
-// Eclipse plugin configuration
-eclipse {
-  project {
-    name = 'DungeonGame'
+subprojects {
+  version = "$projectVersion"
+  ext.appName = 'DungeonGame'
+  repositories {
+    mavenCentral()
+    // You may want to remove the following line if you have errors downloading dependencies.
+    mavenLocal()
+    maven { url = 'https://central.sonatype.com/repository/maven-snapshots/' }
+    maven { url = 'https://jitpack.io' }
   }
 }
+
+eclipse.project.name = 'DungeonGame' + '-parent'

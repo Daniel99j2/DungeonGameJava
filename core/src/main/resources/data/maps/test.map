@@ -1,0 +1,22 @@
+{
+  "data_version": 1,
+  "objects": [
+    {
+      "x": 3.0149996,
+      "y": 3.0,
+      "uuid": "315d4212-0c3f-4e13-9015-b177530c3782",
+      "type": "player",
+      "custom_data": {}
+    },
+    {
+      "x": 1.0,
+      "y": 1.0,
+      "uuid": "1fc78c72-caf7-4e81-ae2d-e249bcdc6f1f",
+      "type": "sprite",
+      "custom_data": {
+        "sprite": "16x",
+        "scale": 1.0
+      }
+    }
+  ]
+}

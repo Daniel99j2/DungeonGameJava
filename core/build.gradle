@@ -1,0 +1,29 @@
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+eclipse.project.name = appName + '-core'
+
+repositories {
+  mavenCentral()
+  maven { url = 'https://dj.ucc.asn.au/maven/' }
+}
+
+dependencies {
+  api "com.badlogicgames.box2dlights:box2dlights:$box2dlightsVersion"
+  api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+  api "com.badlogicgames.gdx:gdx:$gdxVersion"
+  implementation "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
+  compileOnly 'org.jetbrains:annotations:26.0.2'
+
+  api "io.github.spair:imgui-java-binding:$imguiVersion"
+  api "io.github.spair:imgui-java-lwjgl3:$imguiVersion"
+  api "io.github.spair:imgui-java-natives-linux:$imguiVersion"
+  api "io.github.spair:imgui-java-natives-macos:$imguiVersion"
+  api "io.github.spair:imgui-java-natives-windows:$imguiVersion"
+
+  api "com.google.code.gson:gson:2.13.2"
+
+  implementation "com.daniel99j:djutil:1.1"
+
+  if(enableGraalNative == 'true') {
+    implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
+  }
+}
