@@ -2,14 +2,12 @@ package com.daniel99j.dungeongame.util;
 
 import com.badlogic.gdx.math.Vector2;
 import com.daniel99j.dungeongame.GameConstants;
-import com.daniel99j.dungeongame.Main;
 import com.daniel99j.dungeongame.entity.AbstractObject;
 import com.daniel99j.dungeongame.entity.StaticObject;
 import com.daniel99j.dungeongame.world.Level;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.UUID;
@@ -35,13 +33,13 @@ public class LevelLoader {
         JsonObject levelObject = GsonUtil.parse(string);
         if(levelObject.get("data_version").getAsInt() != GameConstants.DATA_VERSION) throw new IllegalStateException("TODO");
         levelObject.get("objects").getAsJsonArray().forEach((jsonElement -> {
-            create(jsonElement.getAsJsonObject(), out);
+            createObject(jsonElement.getAsJsonObject(), out);
 
         }));
         return out;
     }
 
-    private static void create(JsonObject data, Level out) {
+    public static AbstractObject createObject(JsonObject data, Level out) {
         String type = data.get("type").getAsString();
         AbstractObject object = null;
 
@@ -53,7 +51,7 @@ public class LevelLoader {
         }else if(type.equals("rar")) {
 
         } else if(type.equals("player")) {
-            return;
+            return null;
         } else {
             throw new IllegalStateException("Invalid type '"+type+"'");
         }
@@ -62,6 +60,7 @@ public class LevelLoader {
 
         object.setPos(new Vector2(data.get("x").getAsFloat(), data.get("y").getAsFloat()));
         object.setUuid(UUID.fromString(data.get("uuid").getAsString()));
+        return object;
     }
 
     public static String saveLevel(Level level) {

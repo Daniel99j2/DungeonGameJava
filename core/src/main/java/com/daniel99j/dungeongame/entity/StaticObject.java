@@ -23,7 +23,7 @@ public class StaticObject extends AbstractObject {
         this.hitbox = new PolygonShape();
         this.size = new Vector2((GameConstants.atlas.findRegion(sprite).packedWidth / 16.0f)*scale, (GameConstants.atlas.findRegion(sprite).packedHeight / 16.0f)*scale);
 
-        this.hitbox.setAsBox(this.size.x/2, this.size.y/2, new Vector2(0.5f, 0.5f), 0);
+        this.hitbox.setAsBox(this.size.x/2, this.size.y/2, new Vector2(0.5f*scale, 0.5f*scale), 0);
         this.scale = scale;
     }
 
@@ -52,5 +52,13 @@ public class StaticObject extends AbstractObject {
     @Override
     public String getType() {
         return "sprite";
+    }
+
+    @Override
+    public String toString() {
+        return "StaticObject{" +
+            "sprite='" + sprite + '\'' +
+            ", scale=" + scale +
+            '}';
     }
 }

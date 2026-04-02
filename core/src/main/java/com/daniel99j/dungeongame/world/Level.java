@@ -91,4 +91,10 @@ public class Level implements Disposable {
     public @Nullable AbstractObject getObjectByUUID(UUID uuid) {
         return this.getAllObjects().stream().filter((object -> object.getUUID() == uuid)).findFirst().orElse(null);
     }
+
+    public void removeObject(AbstractObject object) {
+        object.dispose();
+        if(object instanceof AdvancedObject) this.advancedObjects.remove(object);
+        if(object instanceof StaticObject) this.staticObjects.remove(object);
+    }
 }

@@ -51,4 +51,9 @@ public class Player extends AdvancedObject {
     public String getType() {
         return "player";
     }
+
+    @Override
+    public String toString() {
+        return "Player";
+    }
 }

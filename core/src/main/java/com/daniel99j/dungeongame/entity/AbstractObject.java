@@ -15,6 +15,7 @@ public abstract class AbstractObject implements Disposable {
     private Body physics;
     private boolean fromWorldLoad = false;
     private UUID uuid;
+    private boolean removed = false;
 
     public AbstractObject() {
     }
@@ -39,7 +40,10 @@ public abstract class AbstractObject implements Disposable {
 
     @Override
     public void dispose() {
-
+        this.getLevel().getBox2dWorld().destroyBody(this.physics);
+        this.physics = null;
+        this.level = null;
+        this.removed = true;
     }
 
     public @NotNull Level getLevel() {
@@ -81,10 +85,12 @@ public abstract class AbstractObject implements Disposable {
     }
 
     public void setUuid(UUID uuid) {
+        if(this.removed) return;
         this.uuid = uuid;
     }
 
     public JsonObject write() {
+        if(this.removed) return new JsonObject();
         JsonObject object = new JsonObject();
         object.addProperty("x", this.getPos().x);
         object.addProperty("y", this.getPos().y);

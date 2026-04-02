@@ -2,9 +2,9 @@
   "data_version": 1,
   "objects": [
     {
-      "x": 6.090313,
-      "y": 8.790807,
-      "uuid": "8baecdcd-c5cd-4fd5-859a-36847782135c",
+      "x": 4.7194667,
+      "y": 6.19121,
+      "uuid": "f5b54ffb-2ca8-4b5d-aa35-08a3edb64230",
       "type": "player",
       "custom_data": {}
     },
@@ -16,6 +16,76 @@
       "custom_data": {
         "sprite": "16x",
         "scale": 3.0
+      }
+    },
+    {
+      "x": 0.0,
+      "y": 4.621,
+      "uuid": "3712cf47-1f6f-4a81-8f2b-f045fecdb7bb",
+      "type": "sprite",
+      "custom_data": {
+        "sprite": "16x",
+        "scale": 1.0
+      }
+    },
+    {
+      "x": 7.789,
+      "y": 3.432,
+      "uuid": "a84bf8c1-ae0e-4999-b791-22fd57201470",
+      "type": "sprite",
+      "custom_data": {
+        "sprite": "16x",
+        "scale": 1.0
+      }
+    },
+    {
+      "x": 6.5142236,
+      "y": 6.010346,
+      "uuid": "06771b2f-57f0-43dc-a1ec-3459760c9c37",
+      "type": "sprite",
+      "custom_data": {
+        "sprite": "16x",
+        "scale": 1.0
+      }
+    },
+    {
+      "x": 9.55,
+      "y": 5.0,
+      "uuid": "c60fc003-ec2f-435b-a08f-56544bc1e492",
+      "type": "sprite",
+      "custom_data": {
+        "sprite": "16x",
+        "scale": 1.0
+      }
+    },
+    {
+      "x": 11.992,
+      "y": 3.68,
+      "uuid": "2d38f4b3-27d3-429a-bcbb-a285c1140963",
+      "type": "sprite",
+      "custom_data": {
+        "sprite": "16x",
+        "scale": 1.0
+      }
+    },
+    {
+      "x": 9.814,
+      "y": 1.04,
+      "uuid": "9896b807-5f64-464d-baf0-2495564b6297",
+      "type": "sprite",
+      "custom_data": {
+        "sprite": "16x",
+        "scale": 1.0
+      }
+    },
+    {
+      "x": 14.917,
+      "y": 2.902,
+      "uuid": "ae58c88f-c198-44b3-9401-56f108edaf72",
+      "type": "sprite",
+      "custom_data": {
+        "sprite": "16x",
+        "scale": 1.0
       }
     }
   ]
