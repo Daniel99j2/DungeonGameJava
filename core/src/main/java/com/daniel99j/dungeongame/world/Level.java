@@ -1,28 +1,39 @@
 package com.daniel99j.dungeongame.world;
 
+import box2dLight.Light;
+import box2dLight.PointLight;
+import box2dLight.RayHandler;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Disposable;
 import com.daniel99j.dungeongame.GameConstants;
-import com.daniel99j.dungeongame.entity.AbstractObject;
-import com.daniel99j.dungeongame.entity.AdvancedObject;
-import com.daniel99j.dungeongame.entity.StaticObject;
+import com.daniel99j.dungeongame.entity.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
 public class Level implements Disposable {
     private final World box2dWorld;
     private float activeTimer;
-    private ArrayList<AdvancedObject> advancedObjects = new ArrayList<>();
-    private ArrayList<StaticObject> staticObjects = new ArrayList<>();
+    private final ArrayList<AdvancedObject> advancedObjects = new ArrayList<>();
+    private final ArrayList<StaticObject> staticObjects = new ArrayList<>();
     private int time;
+    public RayHandler rayHandler;
 
     public Level() {
         this.box2dWorld = new World(new Vector2(0, 0), true);
+        RayHandler.setGammaCorrection(true);
+        this.rayHandler = new RayHandler(this.getBox2dWorld());
+        this.rayHandler.setAmbientLight(0.001f);
+        this.rayHandler.setBlurNum(3);
+        RayHandler.useDiffuseLight(true);
+        this.rayHandler.setShadows(true);
     }
 
     public void tick(float deltaTime) {
@@ -30,8 +41,9 @@ public class Level implements Disposable {
 
         if(activeTimer > GameConstants.SECONDS_PER_TICK) while ((activeTimer-=GameConstants.SECONDS_PER_TICK) > 0) {
             tickWorld();
-            this.box2dWorld.step(GameConstants.SECONDS_PER_TICK, 6, 2);
+            //this.box2dWorld.step(GameConstants.SECONDS_PER_TICK, 6, 2);
         }
+        this.box2dWorld.step(deltaTime, 6, 2);
     }
 
     public void tickWorld() {
@@ -42,12 +54,14 @@ public class Level implements Disposable {
     }
 
     public void render() {
-        for (StaticObject staticObject : this.staticObjects) {
-            staticObject.render();
-        }
-        for (AdvancedObject advancedObject : this.advancedObjects) {
-            advancedObject.render();
-        }
+        ArrayList<AbstractObject> objects = getAllObjects();
+        objects.sort((one, two) -> {
+            float layer1 = one.getLayer();
+            float layer2 = two.getLayer();
+            if(layer1 == layer2) return 0;
+            return Float.compare(layer1, layer2);
+        });
+        objects.forEach(AbstractObject::renderInternal);
     }
 
     @Override
@@ -96,5 +110,11 @@ public class Level implements Disposable {
         object.dispose();
         if(object instanceof AdvancedObject) this.advancedObjects.remove(object);
         if(object instanceof StaticObject) this.staticObjects.remove(object);
+    }
+
+    public <T extends Light> T addLight(Function<RayHandler, T> function) {
+        T light = function.apply(this.rayHandler);
+        light.setContactFilter((short) 1, (short) 0, CollisionCategories.LIGHT_BLOCKING);
+        return light;
     }
 }

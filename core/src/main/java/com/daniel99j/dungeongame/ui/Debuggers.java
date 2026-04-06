@@ -8,9 +8,10 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.daniel99j.djutil.ValueHolder;
 import com.daniel99j.dungeongame.GameConstants;
-import com.daniel99j.dungeongame.Main;
 import com.daniel99j.dungeongame.entity.AbstractObject;
+import com.daniel99j.dungeongame.entity.TilesetObject;
 import com.daniel99j.dungeongame.util.GsonUtil;
 import com.daniel99j.dungeongame.util.LevelLoader;
 import com.daniel99j.dungeongame.util.Logger;
@@ -22,12 +23,14 @@ import imgui.ImVec2;
 import imgui.flag.*;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
+import imgui.type.ImInt;
 import imgui.type.ImString;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -36,16 +39,23 @@ public class Debuggers {
     private static ImGuiImplGlfw imGuiGlfw;
     private static ImGuiImplGl3 imGuiGl3;
     private static InputProcessor tmpProcessor;
-    private static boolean showing = false;
-    private static boolean hitboxes = false;
+    private static Map<String, ValueHolder<Boolean>> debugOptions = new HashMap<>();
     private static UUID selectedObjectId = null;
     private static Vector2 oldPos;
     private static String data = null;
-    public static boolean noclip = false;
     //short for less memory
     private static final ArrayList<Short> fpsCounter = new ArrayList<>();
     private static String createObjectData = null;
     private static ArrayList<String> logger = new ArrayList<>();
+
+    static {
+        if(GameConstants.DEBUGGING) {
+            debugOptions.put("showing", new ValueHolder<>(false));
+            debugOptions.put("hitboxes", new ValueHolder<>(false));
+            debugOptions.put("lights", new ValueHolder<>(true));
+            debugOptions.put("noclip", new ValueHolder<>(false));
+        }
+    }
 
     public static void init() {
         if (GameConstants.DEBUGGING) {
@@ -66,9 +76,9 @@ public class Debuggers {
     public static void render() {
         if (Gdx.input.isKeyJustPressed(Input.Keys.SCROLL_LOCK)) pause();
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.GRAVE)) showing = !showing;
+        if (Gdx.input.isKeyJustPressed(Input.Keys.GRAVE)) debugOptions.get("showing").object = !isEnabled("showing");
 
-        if (GameConstants.DEBUGGING && showing) {
+        if (GameConstants.DEBUGGING && isEnabled("showing")) {
             if (tmpProcessor != null) { // Restore the input processor after ImGui caught all inputs, see #end()
                 Gdx.input.setInputProcessor(tmpProcessor);
                 tmpProcessor = null;
@@ -100,9 +110,9 @@ public class Debuggers {
                 }
             }
 
-            if (ImGui.checkbox("Hitboxes", hitboxes)) hitboxes = !hitboxes;
-
-            if (ImGui.checkbox("Noclip", noclip)) noclip = !noclip;
+            debugOptions.forEach((s, valueHolder) -> {
+                if (ImGui.checkbox(s, valueHolder.object)) valueHolder.object = !valueHolder.object;
+            });
 
             float[] fpsArray = new float[fpsCounter.size()];
             int i = 0;
@@ -209,6 +219,13 @@ public class Debuggers {
                         oldPos = null;
                     }
 
+                    if(selectedObject instanceof TilesetObject tilesetObject) {
+                        ImGui.separatorText("Custom object data");
+
+                        intInput("Width", tilesetObject.getWidth(), tilesetObject::setWidth);
+                        intInput("Height", tilesetObject.getHeight(), tilesetObject::setHeight);
+                    }
+
                     if(ImGui.button("Duplicate")) {
                         try {
                             JsonObject data = selectedObject.write();
@@ -256,59 +273,82 @@ public class Debuggers {
             }
             //END
 
-            if (GameConstants.level != null && hitboxes)
-                box2dDebugRenderer.render(GameConstants.level.getBox2dWorld(), GameConstants.viewport.getCamera().combined);
+            if (ImGui.isWindowHovered(ImGuiHoveredFlags.AnyWindow) || ImGui.isWindowFocused(
+                ImGuiFocusedFlags.AnyWindow)) {
+                ImGui.getStyle().setAlpha(1.0f);
+            } else {
+                ImGui.getStyle().setAlpha(0.2f);
+            }
+
+            // incase imgui changes the viewport
+            GameConstants.camera.update();
+            GameConstants.viewport.apply();
+
+            if (GameConstants.level != null && isEnabled("hitboxes"))
+                box2dDebugRenderer.render(GameConstants.level.getBox2dWorld(), GameConstants.camera.combined);
 
             AbstractObject selectedObject;
             if(hoveredObject != null && (selectedObject = GameConstants.level.getObjectByUUID(hoveredObject)) != null) {
                 boolean wasBlending = Gdx.gl.glIsEnabled(GL20.GL_BLEND);
                 Gdx.gl.glEnable(GL20.GL_BLEND);
+                GameConstants.shapeRenderer.setProjectionMatrix(GameConstants.camera.combined);
                 GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                if(selectedObject.hasPhysics()) {
+                    for (Fixture fixture : selectedObject.getPhysics().getFixtureList()) {
+                        if (fixture.getType() == Shape.Type.Polygon && ((PolygonShape) fixture.getShape()).getVertexCount() == 4) {
+                            Transform transform = selectedObject.getPhysics().getTransform();
 
-                for (Fixture fixture : selectedObject.getPhysics().getFixtureList()) {
-                    if (fixture.getType() == Shape.Type.Polygon && ((PolygonShape) fixture.getShape()).getVertexCount() == 4) {
-                        Transform transform = selectedObject.getPhysics().getTransform();
+                            PolygonShape shape = (PolygonShape) fixture.getShape();
+                            ArrayList<Vector2> corners = new ArrayList<>();
 
-                        PolygonShape shape = (PolygonShape) fixture.getShape();
-                        ArrayList<Vector2> corners = new ArrayList<>();
+                            // Get world-space corners
+                            for (int j = 0; j < shape.getVertexCount(); j++) {
+                                Vector2 localVertex = new Vector2();
+                                shape.getVertex(j, localVertex);
 
-                        // Get world-space corners
-                        for (int j = 0; j < shape.getVertexCount(); j++) {
-                            Vector2 localVertex = new Vector2();
-                            shape.getVertex(j, localVertex);
+                                Vector2 worldVertex = new Vector2(localVertex);
+                                transform.mul(worldVertex); // correct usage
 
-                            Vector2 worldVertex = new Vector2(localVertex);
-                            transform.mul(worldVertex); // correct usage
+                                corners.add(worldVertex);
+                            }
 
-                            corners.add(worldVertex);
+                            // Compute bounding box
+                            float minX = Float.MAX_VALUE;
+                            float minY = Float.MAX_VALUE;
+                            float maxX = -Float.MAX_VALUE;
+                            float maxY = -Float.MAX_VALUE;
+
+                            for (Vector2 v : corners) {
+                                if (v.x < minX) minX = v.x;
+                                if (v.y < minY) minY = v.y;
+                                if (v.x > maxX) maxX = v.x;
+                                if (v.y > maxY) maxY = v.y;
+                            }
+
+                            float x = minX;
+                            float y = minY;
+                            float w = maxX - minX;
+                            float h = maxY - minY;
+
+                            GameConstants.shapeRenderer.setColor(0xdf / 255.0f, 0xf0 / 255.0f, 0x29 / 255.0f, 0.5f);
+                            GameConstants.shapeRenderer.rect(x, y, w, h);
                         }
-
-                        // Compute bounding box
-                        float minX = Float.MAX_VALUE;
-                        float minY = Float.MAX_VALUE;
-                        float maxX = -Float.MAX_VALUE;
-                        float maxY = -Float.MAX_VALUE;
-
-                        for (Vector2 v : corners) {
-                            if (v.x < minX) minX = v.x;
-                            if (v.y < minY) minY = v.y;
-                            if (v.x > maxX) maxX = v.x;
-                            if (v.y > maxY) maxY = v.y;
-                        }
-
-                        float x = minX;
-                        float y = minY;
-                        float w = maxX - minX;
-                        float h = maxY - minY;
-
-                        GameConstants.shapeRenderer.setColor(0xdf/255.0f, 0xf0/255.0f, 0x29/255.0f, 0.5f);
-                        GameConstants.shapeRenderer.rect(x, y, w, h);
                     }
+                } else if(selectedObject instanceof TilesetObject tilesetObject) {
+                    GameConstants.shapeRenderer.setColor(0xdf / 255.0f, 0xf0 / 255.0f, 0x29 / 255.0f, 0.5f);
+                    GameConstants.shapeRenderer.rect(tilesetObject.getPos().x, tilesetObject.getPos().y, tilesetObject.getWidth(), tilesetObject.getHeight());
                 }
                 GameConstants.shapeRenderer.end();
 
                 if(!wasBlending) Gdx.gl.glDisable(GL20.GL_BLEND);
             }
+        }
+    }
+
+    private static void intInput(String name, int getter, Consumer<Integer> setter) {
+        ImInt check = new ImInt(getter);
+        if (ImGui.inputInt(name, check)) {
+            setter.accept(check.get());
         }
     }
 
@@ -339,5 +379,9 @@ public class Debuggers {
         if (t >= System.currentTimeMillis() - 10) {
             Logger.error("Make sure to add breakpoint here!");
         }
+    }
+
+    public static boolean isEnabled(String noclip) {
+        return debugOptions.get(noclip).object;
     }
 }

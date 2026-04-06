@@ -3,6 +3,7 @@ package com.daniel99j.dungeongame.entity;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Disposable;
+import com.daniel99j.djutil.Either;
 import com.daniel99j.dungeongame.world.Level;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 public abstract class AbstractObject implements Disposable {
     private Level level;
-    private Body physics;
+    private Either<PositionHolder, Body> physics;
     private boolean fromWorldLoad = false;
     private UUID uuid;
     private boolean removed = false;
@@ -23,16 +24,20 @@ public abstract class AbstractObject implements Disposable {
     public void init(Level level) {
         this.level = level;
         PhysicsSettings settings = createPhysics();
-        BodyDef bodyDef = new BodyDef();
-        bodyDef.type = settings.bodyType();
-        this.physics = this.level.getBox2dWorld().createBody(bodyDef);
-        this.physics.setLinearDamping(settings.drag()*10);
-        this.physics.setFixedRotation(true);
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = settings.shape();
-        fixtureDef.density = settings.density();
-        this.physics.createFixture(fixtureDef);
-        settings.shape().dispose();
+        if(settings != null) {
+            BodyDef bodyDef = new BodyDef();
+            bodyDef.type = settings.bodyType();
+            this.physics = Either.right(this.level.getBox2dWorld().createBody(bodyDef));
+            this.physics.getRight().setLinearDamping(settings.drag() * 10);
+            this.physics.getRight().setFixedRotation(true);
+            FixtureDef fixtureDef = new FixtureDef();
+            fixtureDef.shape = settings.shape();
+            fixtureDef.density = settings.density();
+            this.physics.getRight().createFixture(fixtureDef);
+            settings.shape().dispose();
+        } else {
+            this.physics = Either.left(new PositionHolder());
+        }
         this.uuid = UUID.randomUUID();
     }
 
@@ -40,7 +45,7 @@ public abstract class AbstractObject implements Disposable {
 
     @Override
     public void dispose() {
-        this.getLevel().getBox2dWorld().destroyBody(this.physics);
+        if(this.physics.isRight()) this.getLevel().getBox2dWorld().destroyBody(this.physics.getRight());
         this.physics = null;
         this.level = null;
         this.removed = true;
@@ -50,14 +55,23 @@ public abstract class AbstractObject implements Disposable {
         return level;
     }
 
+    public final void renderInternal() {
+        if(removed) return;
+        render();
+    };
+
     public abstract void render();
 
     public Vector2 getPos() {
-        return this.physics.getPosition().cpy();
+        if(this.removed) return new Vector2();
+        if(this.physics.isRight()) return this.physics.getRight().getPosition().cpy();
+        else if(this.physics.isLeft()) return this.physics.getLeft().pos.cpy();
+        throw new IllegalStateException();
     }
 
     public void setPos(Vector2 pos) {
-        this.physics.setTransform(pos.x, pos.y, 0);
+        if(this.physics.isRight()) this.physics.getRight().setTransform(pos.x, pos.y, 0);
+        else if(this.physics.isLeft()) this.physics.getLeft().pos = pos.cpy();
     }
 
     public void setX(float x) {
@@ -69,7 +83,15 @@ public abstract class AbstractObject implements Disposable {
     }
 
     public Body getPhysics() {
-        return physics;
+        return physics.getRight();
+    }
+
+    public boolean hasPhysics() {
+        return physics.isRight();
+    }
+
+    public void markRemoved() {
+        this.removed = true;
     }
 
     public void markFromWorldLoad() {
@@ -106,4 +128,6 @@ public abstract class AbstractObject implements Disposable {
     public abstract void writeAdditional(JsonObject object);
 
     public abstract String getType();
+
+    public abstract float getLayer();
 }

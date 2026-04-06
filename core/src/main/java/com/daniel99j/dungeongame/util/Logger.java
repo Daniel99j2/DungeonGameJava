@@ -14,7 +14,7 @@ public class Logger {
     public static void info(String s, Object... data) {
         String val = s;
         for (Object var : data) {
-            val = val.replaceFirst("\\{}", var.toString());
+            if(var != null) val = val.replaceFirst("\\{}", var.toString());
         }
         System.out.println(val);
         Debuggers.log(val);
@@ -33,10 +33,12 @@ public class Logger {
         int i = 0;
         Throwable throwable = null;
         for (Object var : data) {
-            if(i == 0 && var instanceof Throwable t) {
-                throwable = t;
-            } else val = val.replaceFirst("\\{}", var.toString());
-            i++;
+            if(var != null) {
+                if (i == 0 && var instanceof Throwable t) {
+                    throwable = t;
+                } else val = val.replaceFirst("\\{}", var.toString());
+                i++;
+            }
         }
         System.err.println(val);
         Debuggers.log("<error>"+val);

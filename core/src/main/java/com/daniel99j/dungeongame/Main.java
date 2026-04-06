@@ -8,11 +8,13 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.tools.texturepacker.TexturePacker;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.daniel99j.dungeongame.entity.CollisionCategories;
 import com.daniel99j.dungeongame.entity.Player;
 import com.daniel99j.dungeongame.entity.StaticObject;
 import com.daniel99j.dungeongame.ui.Debuggers;
 import com.daniel99j.dungeongame.ui.PlayScreen;
 import com.daniel99j.dungeongame.util.LevelLoader;
+import com.daniel99j.dungeongame.util.Logger;
 import com.daniel99j.dungeongame.util.PathUtil;
 import com.daniel99j.dungeongame.world.Level;
 
@@ -23,6 +25,7 @@ public class Main extends Game {
         TexturePacker.process(PathUtil.asset("game"), PathUtil.relativize("gen/atlases"), "main");
 
         GameConstants.init();
+        GameConstants.viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
 
         setScreen(new PlayScreen());
 
@@ -35,6 +38,12 @@ public class Main extends Game {
 //        StaticObject wall = new StaticObject("16x");
 //        GameConstants.level.addObject(wall);
 //        wall.setPos(Vector2.One);
+
+        Logger.info(CollisionCategories.LIGHT_BLOCKING);
+        Logger.info(CollisionCategories.PATHFIND_BLOCKING);
+        Logger.info(CollisionCategories.PLAYER);
+        Logger.info(CollisionCategories.ENEMY);
+        Logger.info(CollisionCategories.WALL);
     }
 
     @Override
@@ -53,11 +62,13 @@ public class Main extends Game {
     public void render() {
         GameConstants.TIME += Gdx.graphics.getDeltaTime();
         ScreenUtils.clear(new Color(0x111111ff));
+
+        GameConstants.camera.update();
         GameConstants.viewport.apply();
 
-        GameConstants.spriteBatch.setProjectionMatrix(GameConstants.viewport.getCamera().combined);
+        GameConstants.spriteBatch.setProjectionMatrix(GameConstants.camera.combined);
 
-        GameConstants.shapeRenderer.setProjectionMatrix(GameConstants.viewport.getCamera().combined);
+        GameConstants.shapeRenderer.setProjectionMatrix(GameConstants.camera.combined);
         GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         GameConstants.shapeRenderer.setColor(Color.BLACK);
         GameConstants.shapeRenderer.rect(0, 0, 100, 100);
@@ -68,15 +79,22 @@ public class Main extends Game {
         if(GameConstants.level != null) {
             GameConstants.getLevelOrThrow().tick(Gdx.graphics.getDeltaTime());
             GameConstants.getLevelOrThrow().render();
+            GameConstants.spriteBatch.end();
+
+            if(!GameConstants.DEBUGGING || Debuggers.isEnabled("lights")) {
+                GameConstants.camera.update();
+                GameConstants.viewport.apply();
+                GameConstants.level.rayHandler.useCustomViewport(GameConstants.viewport.getScreenX(), GameConstants.viewport.getScreenY(), GameConstants.viewport.getScreenWidth(), GameConstants.viewport.getScreenHeight());
+                GameConstants.level.rayHandler.setCombinedMatrix(GameConstants.camera);
+                GameConstants.level.rayHandler.updateAndRender();
+            }
         }
-        GameConstants.spriteBatch.end();
 
         Debuggers.render();
 
         GameConstants.spriteBatch.begin();
-        super.render();
+        this.screen.render(Gdx.graphics.getDeltaTime());
         GameConstants.spriteBatch.end();
-
     }
 
     @Override

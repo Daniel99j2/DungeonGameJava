@@ -3,7 +3,9 @@ package com.daniel99j.dungeongame.util;
 import com.badlogic.gdx.math.Vector2;
 import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.entity.AbstractObject;
+import com.daniel99j.dungeongame.entity.SpriteObject;
 import com.daniel99j.dungeongame.entity.StaticObject;
+import com.daniel99j.dungeongame.entity.TilesetObject;
 import com.daniel99j.dungeongame.world.Level;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -45,10 +47,12 @@ public class LevelLoader {
 
         JsonObject customData = data.get("custom_data").getAsJsonObject();
         if(type.equals("sprite")) {
-            object = new StaticObject(customData.get("sprite").getAsString(), customData.get("scale").getAsFloat());
+            object = new SpriteObject(customData.get("sprite").getAsString(), customData.get("scale").getAsFloat());
+        } else if(type.equals("tileset")) {
+            object = new TilesetObject(customData.get("sprite").getAsString(), customData.get("width").getAsInt(), customData.get("height").getAsInt());
         } else if(type.equals("monster")) {
 
-        }else if(type.equals("rar")) {
+        } else if(type.equals("rar")) {
 
         } else if(type.equals("player")) {
             return null;

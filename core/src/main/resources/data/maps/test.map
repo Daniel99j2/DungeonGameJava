@@ -2,9 +2,9 @@
   "data_version": 1,
   "objects": [
     {
-      "x": 4.7194667,
-      "y": 6.19121,
-      "uuid": "f5b54ffb-2ca8-4b5d-aa35-08a3edb64230",
+      "x": 3.6960003,
+      "y": 5.014999,
+      "uuid": "05829d7c-f249-4f5a-9d9b-39acd5f1673b",
       "type": "player",
       "custom_data": {}
     },
@@ -69,8 +69,8 @@
       }
     },
     {
-      "x": 9.814,
-      "y": 1.04,
+      "x": 4.711,
+      "y": 3.453,
       "uuid": "9896b807-5f64-464d-baf0-2495564b6297",
       "type": "sprite",
       "custom_data": {
@@ -86,6 +86,28 @@
       "custom_data": {
         "sprite": "16x",
         "scale": 1.0
+      }
+    },
+    {
+      "x": 7.789,
+      "y": 3.639,
+      "uuid": "b21b6ac2-5b4b-483d-89b3-0105d09ec6ab",
+      "type": "tileset",
+      "custom_data": {
+        "width": 1,
+        "height": 5,
+        "sprite": "16x"
+      }
+    },
+    {
+      "x": 0.0,
+      "y": 0.0,
+      "uuid": "50b7cc14-e3e2-4e24-88d1-f3ce065144d6",
+      "type": "tileset",
+      "custom_data": {
+        "width": 16,
+        "height": 9,
+        "sprite": "tilesets/dirt"
       }
     }
   ]

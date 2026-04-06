@@ -7,13 +7,7 @@ import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.world.Level;
 import com.google.gson.JsonObject;
 
-public class AdvancedObject extends AbstractObject {
-    private Vector2 velocity;
-
-    public AdvancedObject() {
-        super();
-    }
-
+public abstract class AdvancedObject extends AbstractObject {
     @Override
     public void render() {
         Vector2 pos = this.getPos();
@@ -43,14 +37,5 @@ public class AdvancedObject extends AbstractObject {
         PolygonShape shape = new PolygonShape();
         shape.setAsBox(1.0f, 0.5f);
         return new PhysicsSettings(BodyDef.BodyType.DynamicBody, shape, 1.0f, 1.0f);
-    }
-
-    @Override
-    public void writeAdditional(JsonObject object) {
-    }
-
-    @Override
-    public String getType() {
-        return "undefined";
     }
 }
