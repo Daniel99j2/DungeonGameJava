@@ -60,7 +60,8 @@ public class LevelLoader {
             throw new IllegalStateException("Invalid type '"+type+"'");
         }
 
-        object.init(out);
+        assert object != null;
+        out.addObject(object);
 
         object.setPos(new Vector2(data.get("x").getAsFloat(), data.get("y").getAsFloat()));
         object.setUuid(UUID.fromString(data.get("uuid").getAsString()));

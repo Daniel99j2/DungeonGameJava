@@ -3,6 +3,7 @@ package com.daniel99j.dungeongame;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Cursor;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
@@ -33,7 +34,7 @@ public class Main extends Game {
 
         GameConstants.level = LevelLoader.loadFromData("test"); //
         GameConstants.player = new Player();
-        GameConstants.player.init(GameConstants.level);
+        GameConstants.level.addObject(GameConstants.player);
         GameConstants.player.setPos(new Vector2(3, 3));
 //        StaticObject wall = new StaticObject("16x");
 //        GameConstants.level.addObject(wall);
@@ -60,9 +61,14 @@ public class Main extends Game {
 
     @Override
     public void render() {
+        Gdx.input.setCursorCatched(!Debuggers.isDebuggerOpen());
+
         GameConstants.TIME += Gdx.graphics.getDeltaTime();
         ScreenUtils.clear(new Color(0x111111ff));
 
+        assert GameConstants.player != null;
+        GameConstants.camera.position.x = GameConstants.player.getPos().x;
+        GameConstants.camera.position.y = GameConstants.player.getPos().y;
         GameConstants.camera.update();
         GameConstants.viewport.apply();
 
@@ -71,7 +77,7 @@ public class Main extends Game {
         GameConstants.shapeRenderer.setProjectionMatrix(GameConstants.camera.combined);
         GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         GameConstants.shapeRenderer.setColor(Color.BLACK);
-        GameConstants.shapeRenderer.rect(0, 0, 100, 100);
+        GameConstants.shapeRenderer.rect(GameConstants.player.getPos().x-10, GameConstants.player.getPos().y-10, 1000, 1000);
         GameConstants.shapeRenderer.end();
 
         GameConstants.spriteBatch.begin();

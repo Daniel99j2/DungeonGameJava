@@ -4,8 +4,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Disposable;
 import com.daniel99j.djutil.Either;
+import com.daniel99j.djutil.UsageLimited;
 import com.daniel99j.dungeongame.world.Level;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +21,7 @@ public abstract class AbstractObject implements Disposable {
     public AbstractObject() {
     }
 
+    @UsageLimited
     public void init(Level level) {
         this.level = level;
         PhysicsSettings settings = createPhysics();
@@ -35,6 +36,7 @@ public abstract class AbstractObject implements Disposable {
             fixtureDef.density = settings.density();
             this.physics.getRight().createFixture(fixtureDef);
             settings.shape().dispose();
+            this.physics.getRight().setUserData(this);
         } else {
             this.physics = Either.left(new PositionHolder());
         }

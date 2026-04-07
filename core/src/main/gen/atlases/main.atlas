@@ -53,6 +53,19 @@ test
   index: -1
 
 main4.png
+size: 64, 64
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+npc/testdummy
+  rotate: false
+  xy: 2, 2
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+
+main5.png
 size: 32, 32
 format: RGBA8888
 filter: Nearest, Nearest

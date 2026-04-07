@@ -6,14 +6,13 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.ui.Debuggers;
 import com.daniel99j.dungeongame.util.RenderLayer;
 import com.daniel99j.dungeongame.world.Level;
+import com.daniel99j.dungeongame.world.SaveConfig;
 import com.google.gson.JsonObject;
-import org.lwjgl.Sys;
 
 public class Player extends AdvancedObject {
     private PointLight light;
@@ -50,18 +49,19 @@ public class Player extends AdvancedObject {
     @Override
     public void init(Level level) {
         super.init(level);
-        this.light = level.addLight((handler) -> new PointLight(handler, 512, new Color(1,1,1,1f), 50,0,0));
+        //#1F1006
+        this.light = level.addLight((handler) -> new PointLight(handler, 512, new Color(0x1f/255.0f,0x10/255.0f,0x06/255.0f,1), 5.653f,0,0), SaveConfig.NEVER).light();
         this.light.setStaticLight(false);
         this.light.setSoft(true);
-        this.light.setSoftnessLength(5f);
+        this.light.setSoftnessLength(2.34f);
         this.light.setContactFilter((short) 1, (short) 0, CollisionCategories.LIGHT_BLOCKING);
         this.light.attachToBody(this.getPhysics());
     }
 
     @Override
     public void dispose() {
+        this.getLevel().removeLight(this.light);
         super.dispose();
-        this.light.dispose();
     }
 
     @Override

@@ -16,6 +16,7 @@ public abstract class AdvancedObject extends AbstractObject {
 
     @Override
     public void init(Level level) {
+        //noinspection usagelimited
         super.init(level);
         level.getAdvancedObjects().add(this);
     }
