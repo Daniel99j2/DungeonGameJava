@@ -2,11 +2,22 @@
   "data_version": 1,
   "objects": [
     {
-      "x": 3.595989,
-      "y": 5.829939,
-      "uuid": "e38472e8-d4b1-45ce-b4ae-e20d72cabe7b",
+      "x": 16.519035,
+      "y": -0.19458254,
+      "uuid": "163b86a8-c781-4bd4-9aad-87bdcbd95f65",
       "type": "player",
       "custom_data": {}
+    },
+    {
+      "x": 20.125,
+      "y": -0.066,
+      "uuid": "a2d8d17c-2759-494f-86ce-9a08e4545dc8",
+      "type": "treasure",
+      "custom_data": {
+        "sprite": "coin",
+        "runnableName": "add_treasure",
+        "colour": "fcb603ff"
+      }
     },
     {
       "x": 0.0,
@@ -89,26 +100,45 @@
       }
     },
     {
-      "x": 7.789,
-      "y": 3.639,
-      "uuid": "b21b6ac2-5b4b-483d-89b3-0105d09ec6ab",
-      "type": "tileset",
-      "custom_data": {
-        "width": 1,
-        "height": 5,
-        "sprite": "16x"
-      }
-    },
-    {
       "x": 0.0,
-      "y": 0.0,
+      "y": -7.0,
       "uuid": "50b7cc14-e3e2-4e24-88d1-f3ce065144d6",
       "type": "tileset",
       "custom_data": {
-        "width": 16,
-        "height": 9,
+        "width": 22,
+        "height": 16,
         "sprite": "tilesets/dirt"
       }
+    },
+    {
+      "x": 8.0,
+      "y": 9.0,
+      "uuid": "22ff1216-24bf-4327-b140-0acb778a560c",
+      "type": "tileset",
+      "custom_data": {
+        "width": 5,
+        "height": 6,
+        "sprite": "npc/testdummy"
+      }
+    }
+  ],
+  "lights": [
+    {
+      "uuid": "4a8bfb5a-b727-4595-aa46-2898938f20ff",
+      "saveConfig": "ALWAYS",
+      "lightClass": "class box2dLight.ConeLight",
+      "colour": "080919ff",
+      "direction": 306.0,
+      "distance": 100.0,
+      "xray": false,
+      "static": false,
+      "active": true,
+      "soft": true,
+      "softShadowLength": 0.817,
+      "rays": 128,
+      "x": 1.5,
+      "y": 6.534228,
+      "coneDegree": 23.093
     }
   ]
 }

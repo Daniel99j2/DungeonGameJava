@@ -25,6 +25,13 @@ uiskin
   orig: 512, 512
   offset: 0, 0
   index: -1
+coin
+  rotate: false
+  xy: 516, 516
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
 
 main2.png
 size: 1024, 1024

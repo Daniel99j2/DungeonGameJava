@@ -20,6 +20,7 @@ public class TilesetObject extends StaticObject {
         this.sprite = sprite;
         this.width = width;
         this.height = height;
+        //slightly extra so that
         this.size = new Vector2((GameConstants.atlas.findRegion(sprite).packedWidth / 16.0f), (GameConstants.atlas.findRegion(sprite).packedHeight / 16.0f));
     }
 
@@ -30,10 +31,11 @@ public class TilesetObject extends StaticObject {
 
     @Override
     public void render() {
-        for (int x = 0; x < this.width; x++) {
-            for (int y = 0; y < this.height; y++) {
+        for (float x = 0; x < this.width*this.size.x; x+=this.size.x) {
+            for (float y = 0; y < this.height*this.size.y; y+=this.size.y) {
                 GameConstants.spriteBatch.enableBlending();
-                GameConstants.spriteBatch.draw(GameConstants.atlas.findRegion(sprite), this.getPos().x+x, this.getPos().y+y, this.size.x, this.size.y);
+                //slightly more so that it doesnt have seams
+                GameConstants.spriteBatch.draw(GameConstants.atlas.findRegion(sprite), this.getPos().x+x, this.getPos().y+y, this.size.x+0.0001f, this.size.y+0.0001f);
             }
         }
     }
@@ -45,9 +47,13 @@ public class TilesetObject extends StaticObject {
         object.addProperty("sprite", sprite);
     }
 
+    public static TilesetObject read(JsonObject object) {
+        return new TilesetObject(object.get("sprite").getAsString(), object.get("width").getAsInt(), object.get("height").getAsInt());
+    }
+
     @Override
-    public String getType() {
-        return "tileset";
+    public ObjectType<TilesetObject> getType() {
+        return ObjectTypes.TILESET;
     }
 
     @Override

@@ -16,9 +16,11 @@ import com.daniel99j.djutil.ValueHolder;
 import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.entity.AbstractObject;
 import com.daniel99j.dungeongame.entity.TilesetObject;
+import com.daniel99j.dungeongame.entity.TreasureObject;
 import com.daniel99j.dungeongame.util.*;
-import com.daniel99j.dungeongame.world.LevelLight;
-import com.daniel99j.dungeongame.world.SaveConfig;
+import com.daniel99j.dungeongame.level.LevelLight;
+import com.daniel99j.dungeongame.level.LevelLoader;
+import com.daniel99j.dungeongame.level.SaveConfig;
 import com.google.gson.JsonObject;
 import imgui.ImGui;
 import imgui.ImGuiIO;
@@ -62,6 +64,7 @@ public class Debuggers {
             debugOptions.put("noclip", new ValueHolder<>(false));
             debugOptions.put("selecting", new ValueHolder<>(false));
             debugOptions.put("selectingLight", new ValueHolder<>(false));
+            debugOptions.put("staticLightUpdates", new ValueHolder<>(true));
         }
     }
 
@@ -86,11 +89,25 @@ public class Debuggers {
     }
 
     public static void render() {
+        if(!GameConstants.DEBUGGING) return;
         if (Gdx.input.isKeyJustPressed(Input.Keys.SCROLL_LOCK)) pause();
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.GRAVE)) debugOptions.get("showing").object = !isEnabled("showing");
 
         if (isDebuggerOpen()) {
+            if(isEnabled("staticLightUpdates")) {
+                for (LevelLight<?> light : GameConstants.level.getLights()) {
+                    if(light.light().isStaticLight()) {
+                        light.light().setStaticLight(false);
+                        light.light().setStaticLight(true);
+                    }
+                }
+            }
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
+                GameConstants.level.addObject(new TreasureObject(GlobalRunnables.ADD_TREASURE, "coin", Color.valueOf("#fcb603")));
+            }
+
             if (tmpProcessor != null) { // Restore the input processor after ImGui caught all inputs, see #end()
                 Gdx.input.setInputProcessor(tmpProcessor);
                 tmpProcessor = null;

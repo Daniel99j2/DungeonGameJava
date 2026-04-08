@@ -3,21 +3,15 @@ package com.daniel99j.dungeongame;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Cursor;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.tools.texturepacker.TexturePacker;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.daniel99j.dungeongame.entity.CollisionCategories;
-import com.daniel99j.dungeongame.entity.Player;
-import com.daniel99j.dungeongame.entity.StaticObject;
 import com.daniel99j.dungeongame.ui.Debuggers;
 import com.daniel99j.dungeongame.ui.PlayScreen;
-import com.daniel99j.dungeongame.util.LevelLoader;
+import com.daniel99j.dungeongame.level.LevelLoader;
 import com.daniel99j.dungeongame.util.Logger;
 import com.daniel99j.dungeongame.util.PathUtil;
-import com.daniel99j.dungeongame.world.Level;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Main extends Game {
@@ -33,9 +27,6 @@ public class Main extends Game {
         Debuggers.init();
 
         GameConstants.level = LevelLoader.loadFromData("test"); //
-        GameConstants.player = new Player();
-        GameConstants.level.addObject(GameConstants.player);
-        GameConstants.player.setPos(new Vector2(3, 3));
 //        StaticObject wall = new StaticObject("16x");
 //        GameConstants.level.addObject(wall);
 //        wall.setPos(Vector2.One);

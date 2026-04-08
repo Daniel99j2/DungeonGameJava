@@ -4,8 +4,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.daniel99j.dungeongame.GameConstants;
-import com.daniel99j.dungeongame.world.Level;
-import com.google.gson.JsonObject;
+import com.daniel99j.dungeongame.level.Level;
 
 public abstract class AdvancedObject extends AbstractObject {
     @Override
@@ -15,10 +14,9 @@ public abstract class AdvancedObject extends AbstractObject {
     }
 
     @Override
-    public void init(Level level) {
-        //noinspection usagelimited
-        super.init(level);
-        level.getAdvancedObjects().add(this);
+    public void onAdd(boolean fromLoad) {
+        super.onAdd(fromLoad);
+        this.getLevel().getAdvancedObjects().add(this);
     }
 
     public void tick() {

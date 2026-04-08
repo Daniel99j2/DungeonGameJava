@@ -1,4 +1,4 @@
-package com.daniel99j.dungeongame.world;
+package com.daniel99j.dungeongame.level;
 
 import box2dLight.Light;
 import box2dLight.RayHandler;
@@ -93,7 +93,12 @@ public class Level implements Disposable {
 
     public void addObject(AbstractObject object) {
         //noinspection usagelimited
-        object.init(this);
+        object.init(this, false);
+    }
+
+    public void addObjectFromLoad(AbstractObject object) {
+        //noinspection usagelimited
+        object.init(this, true);
     }
 
     public void completedLoad() {
@@ -129,11 +134,13 @@ public class Level implements Disposable {
     }
 
     public void removeLight(Light light) {
+        LevelLight<?> toRemove = null;
         for (LevelLight<?> levelLight : this.lights) {
             if(levelLight.light().equals(light)) {
-                removeLight(levelLight);
+                toRemove = levelLight;
             }
         }
+        if(toRemove != null) removeLight(toRemove);
     }
 
     public void removeLight(LevelLight<?> light) {

@@ -5,7 +5,8 @@ import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Disposable;
 import com.daniel99j.djutil.Either;
 import com.daniel99j.djutil.UsageLimited;
-import com.daniel99j.dungeongame.world.Level;
+import com.daniel99j.dungeongame.level.Level;
+import com.daniel99j.dungeongame.level.SaveConfig;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,12 +18,13 @@ public abstract class AbstractObject implements Disposable {
     private boolean fromWorldLoad = false;
     private UUID uuid;
     private boolean removed = false;
+    private SaveConfig saveConfig;
 
     public AbstractObject() {
     }
 
     @UsageLimited
-    public void init(Level level) {
+    public final void init(Level level, boolean fromLoad) {
         this.level = level;
         PhysicsSettings settings = createPhysics();
         if(settings != null) {
@@ -40,7 +42,12 @@ public abstract class AbstractObject implements Disposable {
         } else {
             this.physics = Either.left(new PositionHolder());
         }
-        this.uuid = UUID.randomUUID();
+        if(!fromLoad) this.uuid = UUID.randomUUID();
+        if(!fromLoad) onAdd(false);
+    }
+
+    public void onAdd(boolean fromLoad) {
+
     }
 
     protected abstract PhysicsSettings createPhysics();
@@ -119,7 +126,7 @@ public abstract class AbstractObject implements Disposable {
         object.addProperty("x", this.getPos().x);
         object.addProperty("y", this.getPos().y);
         object.addProperty("uuid", this.getUUID().toString());
-        object.addProperty("type", this.getType());
+        object.addProperty("type", this.getType().id());
 
         JsonObject custom = new JsonObject();
         writeAdditional(custom);
@@ -129,7 +136,20 @@ public abstract class AbstractObject implements Disposable {
 
     public abstract void writeAdditional(JsonObject object);
 
-    public abstract String getType();
+    public static void readBasic(AbstractObject this1, JsonObject data) {
+        this1.setPos(new Vector2(data.get("x").getAsFloat(), data.get("y").getAsFloat()));
+        this1.setUuid(UUID.fromString(data.get("uuid").getAsString()));
+    }
+
+    public abstract ObjectType<?> getType();
 
     public abstract float getLayer();
+
+    public SaveConfig getSaveConfig() {
+        return saveConfig;
+    }
+
+    public void setSaveConfig(SaveConfig saveConfig) {
+        this.saveConfig = saveConfig;
+    }
 }

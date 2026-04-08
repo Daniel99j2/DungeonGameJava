@@ -6,7 +6,7 @@ import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.util.RenderLayer;
-import com.daniel99j.dungeongame.world.Level;
+import com.daniel99j.dungeongame.level.Level;
 import com.google.gson.JsonObject;
 
 public class SpriteObject extends StaticObject {
@@ -30,8 +30,8 @@ public class SpriteObject extends StaticObject {
     }
 
     @Override
-    public void init(Level level) {
-        super.init(level);
+    public void onAdd(boolean fromLoad) {
+        super.onAdd(fromLoad);
         Filter f = new Filter();
         f.categoryBits = (short) (CollisionCategories.LIGHT_BLOCKING | CollisionCategories.WALL);
         this.getPhysics().getFixtureList().get(0).setFilterData(f);
@@ -53,9 +53,13 @@ public class SpriteObject extends StaticObject {
         object.addProperty("scale", scale);
     }
 
+    public static SpriteObject read(JsonObject object) {
+        return new SpriteObject(object.get("sprite").getAsString(), object.get("scale").getAsFloat());
+    }
+
     @Override
-    public String getType() {
-        return "sprite";
+    public ObjectType<SpriteObject> getType() {
+        return ObjectTypes.SPRITE;
     }
 
     @Override
