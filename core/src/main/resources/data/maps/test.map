@@ -2,8 +2,8 @@
   "data_version": 1,
   "objects": [
     {
-      "x": 16.519035,
-      "y": -0.19458254,
+      "x": 12.337788,
+      "y": 6.779612,
       "uuid": "163b86a8-c781-4bd4-9aad-87bdcbd95f65",
       "type": "player",
       "custom_data": {}
@@ -18,6 +18,13 @@
         "runnableName": "add_treasure",
         "colour": "fcb603ff"
       }
+    },
+    {
+      "x": 18.107788,
+      "y": 2.214694,
+      "uuid": "43496af7-6faf-45ca-90ed-01bf0fa66902",
+      "type": "hog",
+      "custom_data": {}
     },
     {
       "x": 0.0,

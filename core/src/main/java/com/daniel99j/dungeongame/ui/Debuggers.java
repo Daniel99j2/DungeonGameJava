@@ -7,16 +7,22 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.Vector4;
 import com.badlogic.gdx.physics.box2d.*;
 import com.daniel99j.djutil.ValueHolder;
+import com.daniel99j.djutil.pathfinder.PathfindDebugPos;
+import com.daniel99j.djutil.pathfinder.PathfindDebugType;
 import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.entity.AbstractObject;
 import com.daniel99j.dungeongame.entity.TilesetObject;
 import com.daniel99j.dungeongame.entity.TreasureObject;
+import com.daniel99j.dungeongame.sounds.SoundInstance;
+import com.daniel99j.dungeongame.sounds.SoundManager;
 import com.daniel99j.dungeongame.util.*;
 import com.daniel99j.dungeongame.level.LevelLight;
 import com.daniel99j.dungeongame.level.LevelLoader;
@@ -54,17 +60,31 @@ public class Debuggers {
     //short for less memory
     private static final ArrayList<Short> fpsCounter = new ArrayList<>();
     private static String createObjectData = null;
-    private static ArrayList<String> logger = new ArrayList<>();
+    private static String soundName = null;
+    private static final ArrayList<String> logger = new ArrayList<>();
+    public static final Map<String, ArrayList<PathfindDebugPos>> pathfindDebuggers = new HashMap<>();
+    public static final Map<String, Integer> pathfindDebuggerTimers = new HashMap<>();
+    public static Vector2 freecam = Vector2.Zero;
+    private static float lastTime = 0;
+    private static ArrayList<String> audioNames = new ArrayList<>();
 
     static {
-        if(GameConstants.DEBUGGING) {
+        if (GameConstants.DEBUGGING) {
             debugOptions.put("showing", new ValueHolder<>(false));
             debugOptions.put("hitboxes", new ValueHolder<>(false));
             debugOptions.put("lights", new ValueHolder<>(true));
             debugOptions.put("noclip", new ValueHolder<>(false));
             debugOptions.put("selecting", new ValueHolder<>(false));
             debugOptions.put("selectingLight", new ValueHolder<>(false));
-            debugOptions.put("staticLightUpdates", new ValueHolder<>(true));
+            debugOptions.put("staticLightUpdates", new ValueHolder<>(false));
+            debugOptions.put("pathfindingRender", new ValueHolder<>(false));
+            debugOptions.put("disablePathfinding", new ValueHolder<>(false));
+            debugOptions.put("freecam", new ValueHolder<>(false));
+            debugOptions.put("tick", new ValueHolder<>(true));
+
+            for (FileHandle e : Gdx.files.internal(PathUtil.asset("sounds/")).list()) {
+                audioNames.add(e.name());
+            }
         }
     }
 
@@ -89,19 +109,60 @@ public class Debuggers {
     }
 
     public static void render() {
-        if(!GameConstants.DEBUGGING) return;
+        if (!GameConstants.DEBUGGING) return;
         if (Gdx.input.isKeyJustPressed(Input.Keys.SCROLL_LOCK)) pause();
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.GRAVE)) debugOptions.get("showing").object = !isEnabled("showing");
 
         if (isDebuggerOpen()) {
-            if(isEnabled("staticLightUpdates")) {
+            if (isEnabled("staticLightUpdates") && GameConstants.level != null) {
                 for (LevelLight<?> light : GameConstants.level.getLights()) {
-                    if(light.light().isStaticLight()) {
+                    if (light.light().isStaticLight()) {
                         light.light().setStaticLight(false);
                         light.light().setStaticLight(true);
                     }
                 }
+            }
+
+            if(isEnabled("pathfindingRender")) {
+                RenderUtil.enableBlending();
+                pathfindDebuggers.forEach((hash, debuggers) -> {
+                    for (PathfindDebugPos pathfindDebugPos : debuggers) {
+                        float transparency = pathfindDebuggerTimers.get(hash).floatValue()/(5*GameConstants.TICKS_PER_SECOND);
+
+                        GameConstants.shapeRenderer.setProjectionMatrix(GameConstants.camera.combined);
+                        if (pathfindDebugPos.type().equals(PathfindDebugType.SUCCESSFUL_PATH)) {
+                            GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+                            GameConstants.shapeRenderer.setColor(Color.GREEN.cpy().mul(1, 1, 1, transparency));
+                            GameConstants.shapeRenderer.line(pathfindDebugPos.pos().getX() + 0.5f, pathfindDebugPos.pos().getY() + 0.5f, pathfindDebugPos.previous().getX() + 0.5f, pathfindDebugPos.previous().getY() + 0.5f);
+                        } else if (pathfindDebugPos.type().equals(PathfindDebugType.CONNECTION)) {
+                            GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+                            GameConstants.shapeRenderer.setColor(Color.YELLOW.cpy().mul(1, 1, 1, transparency));
+                            GameConstants.shapeRenderer.line(pathfindDebugPos.pos().getX() + 0.5f, pathfindDebugPos.pos().getY() + 0.5f, pathfindDebugPos.previous().getX() + 0.5f, pathfindDebugPos.previous().getY() + 0.5f);
+                        } else if (pathfindDebugPos.type().equals(PathfindDebugType.INVALID)) {
+                            GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                            GameConstants.shapeRenderer.setColor(Color.GRAY.cpy().mul(1, 1, 1, transparency));
+                            GameConstants.shapeRenderer.rect(pathfindDebugPos.pos().getX() + 0.3f, pathfindDebugPos.pos().getY() + 0.3f, 0.4f, 0.4f);
+                        } else if (pathfindDebugPos.type().equals(PathfindDebugType.OPEN_SET)) {
+                            GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                            GameConstants.shapeRenderer.setColor(Color.RED.cpy().mul(1, 1, 1, transparency));
+                            GameConstants.shapeRenderer.rect(pathfindDebugPos.pos().getX() + 0.3f, pathfindDebugPos.pos().getY() + 0.3f, 0.4f, 0.4f);
+                        } else if (pathfindDebugPos.type().equals(PathfindDebugType.CLOSED_SET)) {
+                            GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                            GameConstants.shapeRenderer.setColor(Color.YELLOW.cpy().mul(1, 1, 1, transparency));
+                            GameConstants.shapeRenderer.rect(pathfindDebugPos.pos().getX() + 0.3f, pathfindDebugPos.pos().getY() + 0.3f, 0.4f, 0.4f);
+                        } else if (pathfindDebugPos.type().equals(PathfindDebugType.START)) {
+                            GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                            GameConstants.shapeRenderer.setColor(Color.BLUE.cpy().mul(1, 1, 1, transparency));
+                            GameConstants.shapeRenderer.rect(pathfindDebugPos.pos().getX() + 0.3f, pathfindDebugPos.pos().getY() + 0.3f, 0.4f, 0.4f);
+                        } else if (pathfindDebugPos.type().equals(PathfindDebugType.END)) {
+                            GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                            GameConstants.shapeRenderer.setColor(Color.PURPLE.cpy().mul(1, 1, 1, transparency));
+                            GameConstants.shapeRenderer.rect(pathfindDebugPos.pos().getX() + 0.3f, pathfindDebugPos.pos().getY() + 0.3f, 0.4f, 0.4f);
+                        }
+                        GameConstants.shapeRenderer.end();
+                    }
+                });
             }
 
             if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
@@ -121,11 +182,11 @@ public class Debuggers {
 
             ImGui.begin("Logger");
             for (String s : logger) {
-                if(s.startsWith("<error>")) {
+                if (s.startsWith("<error>")) {
                     ImGui.textColored(0xff0000ff, s.replace("<error>", ""));
                 } else ImGui.text(s);
 
-                if(!ImGui.isWindowHovered()) ImGui.setScrollY(10000);
+                if (!ImGui.isWindowHovered()) ImGui.setScrollY(10000);
             }
             ImGui.end();
 
@@ -139,8 +200,16 @@ public class Debuggers {
                 }
             }
 
+            if (ImGui.button("Kill")) {
+                GameConstants.player.damage(100000);
+            }
+
             debugOptions.forEach((s, valueHolder) -> {
-                if(!s.equals("showing") && !s.equals("selecting") && !s.equals("selectingLight")) if (ImGui.checkbox(s, valueHolder.object)) valueHolder.object = !valueHolder.object;
+                if (!s.equals("showing") && !s.equals("selecting") && !s.equals("selectingLight"))
+                    if (ImGui.checkbox(s, valueHolder.object)) {
+                        valueHolder.object = !valueHolder.object;
+                        if(s.equals("freecam")) freecam = new Vector2(GameConstants.camera.position.x, GameConstants.camera.position.y);
+                    }
             });
 
             float[] fpsArray = new float[fpsCounter.size()];
@@ -151,7 +220,8 @@ public class Debuggers {
             }
 
             ImGui.plotLines("FPS graph", fpsArray, 100, 1, "", 0, 200, new ImVec2(0, 80));
-            if (GameConstants.getLevelOrThrow().getTime() % 2 == 0) {
+            if (GameConstants.TIME > lastTime+0.02f) {
+                lastTime = GameConstants.TIME;
                 if (fpsCounter.size() > 100) fpsCounter.removeFirst();
                 fpsCounter.add((short) Gdx.graphics.getFramesPerSecond());
             }
@@ -179,6 +249,46 @@ public class Debuggers {
 
             ImGui.end();
 
+            //DEBUGGERS
+
+            // incase imgui changes the viewport
+            GameConstants.camera.update();
+            GameConstants.viewport.apply();
+
+            if(GameConstants.level != null) {
+
+                if (GameConstants.level != null && isEnabled("hitboxes"))
+                    box2dDebugRenderer.render(GameConstants.level.getBox2dWorld(), GameConstants.camera.combined);
+
+                AbstractObject selectedObject;
+                if (hoveredObject != null && (selectedObject = GameConstants.level.getObjectByUUID(hoveredObject)) != null) {
+                    RenderUtil.enableBlending();
+                    GameConstants.shapeRenderer.setProjectionMatrix(GameConstants.camera.combined);
+                    GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                    if (selectedObject.hasPhysics()) {
+                        for (Fixture fixture : selectedObject.getPhysics().getFixtureList()) {
+                            Vector4 hitbox = selectedObject.getHitbox(fixture);
+                            GameConstants.shapeRenderer.setColor(0xdf / 255.0f, 0xf0 / 255.0f, 0x29 / 255.0f, 0.5f);
+                            GameConstants.shapeRenderer.rect(hitbox.x, hitbox.y, hitbox.z, hitbox.w);
+                        }
+                    } else if (selectedObject instanceof TilesetObject tilesetObject) {
+                        GameConstants.shapeRenderer.setColor(0xdf / 255.0f, 0xf0 / 255.0f, 0x29 / 255.0f, 0.5f);
+                        GameConstants.shapeRenderer.rect(tilesetObject.getPos().x, tilesetObject.getPos().y, tilesetObject.getWidth(), tilesetObject.getHeight());
+                    }
+                    GameConstants.shapeRenderer.end();
+                }
+
+                if (showLights) for (LevelLight<?> light : GameConstants.level.getLights()) {
+                    Color c = light.light().getColor().cpy();
+                    if (light.uuid().equals(hoveredLight)) c = Color.YELLOW;
+                    GameConstants.shapeRenderer.setProjectionMatrix(GameConstants.camera.combined);
+                    GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                    GameConstants.shapeRenderer.setColor(c);
+                    GameConstants.shapeRenderer.circle(light.light().getPosition().x, light.light().getPosition().y, 0.2f, 20);
+                    GameConstants.shapeRenderer.end();
+                }
+            }
+
             //END
             ImGui.render();
             imGuiGl3.renderDrawData(ImGui.getDrawData());
@@ -196,83 +306,11 @@ public class Debuggers {
             } else {
                 ImGui.getStyle().setAlpha(0.2f);
             }
-
-            // incase imgui changes the viewport
-            GameConstants.camera.update();
-            GameConstants.viewport.apply();
-
-            if (GameConstants.level != null && isEnabled("hitboxes"))
-                box2dDebugRenderer.render(GameConstants.level.getBox2dWorld(), GameConstants.camera.combined);
-
-            AbstractObject selectedObject;
-            if(hoveredObject != null && (selectedObject = GameConstants.level.getObjectByUUID(hoveredObject)) != null) {
-                RenderUtil.renderWithBlend(() -> {
-                    GameConstants.shapeRenderer.setProjectionMatrix(GameConstants.camera.combined);
-                    GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                    if (selectedObject.hasPhysics()) {
-                        for (Fixture fixture : selectedObject.getPhysics().getFixtureList()) {
-                            if (fixture.getType() == Shape.Type.Polygon && ((PolygonShape) fixture.getShape()).getVertexCount() == 4) {
-                                Transform transform = selectedObject.getPhysics().getTransform();
-
-                                PolygonShape shape = (PolygonShape) fixture.getShape();
-                                ArrayList<Vector2> corners = new ArrayList<>();
-
-                                // Get world-space corners
-                                for (int j = 0; j < shape.getVertexCount(); j++) {
-                                    Vector2 localVertex = new Vector2();
-                                    shape.getVertex(j, localVertex);
-
-                                    Vector2 worldVertex = new Vector2(localVertex);
-                                    transform.mul(worldVertex); // correct usage
-
-                                    corners.add(worldVertex);
-                                }
-
-                                // Compute bounding box
-                                float minX = Float.MAX_VALUE;
-                                float minY = Float.MAX_VALUE;
-                                float maxX = -Float.MAX_VALUE;
-                                float maxY = -Float.MAX_VALUE;
-
-                                for (Vector2 v : corners) {
-                                    if (v.x < minX) minX = v.x;
-                                    if (v.y < minY) minY = v.y;
-                                    if (v.x > maxX) maxX = v.x;
-                                    if (v.y > maxY) maxY = v.y;
-                                }
-
-                                float x = minX;
-                                float y = minY;
-                                float w = maxX - minX;
-                                float h = maxY - minY;
-
-                                GameConstants.shapeRenderer.setColor(0xdf / 255.0f, 0xf0 / 255.0f, 0x29 / 255.0f, 0.5f);
-                                GameConstants.shapeRenderer.rect(x, y, w, h);
-                            }
-                        }
-                    } else if (selectedObject instanceof TilesetObject tilesetObject) {
-                        GameConstants.shapeRenderer.setColor(0xdf / 255.0f, 0xf0 / 255.0f, 0x29 / 255.0f, 0.5f);
-                        GameConstants.shapeRenderer.rect(tilesetObject.getPos().x, tilesetObject.getPos().y, tilesetObject.getWidth(), tilesetObject.getHeight());
-                    }
-                    GameConstants.shapeRenderer.end();
-
-                });
-            }
-
-            if(showLights) for (LevelLight<?> light : GameConstants.level.getLights()) {
-                Color c = light.light().getColor().cpy();
-                if(light.uuid().equals(hoveredLight)) c = Color.YELLOW;
-                GameConstants.shapeRenderer.setProjectionMatrix(GameConstants.camera.combined);
-                GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                GameConstants.shapeRenderer.setColor(c);
-                GameConstants.shapeRenderer.circle(light.light().getPosition().x, light.light().getPosition().y, 0.2f, 20);
-                GameConstants.shapeRenderer.end();
-            }
         }
     }
 
     private static void renderObjectCreator() {
-        if(ImGui.button("Edit objects"))
+        if (ImGui.button("Edit objects"))
             createObjectData = null;
         else {
             ImString objectCreator = new ImString(createObjectData, 10000);
@@ -302,18 +340,20 @@ public class Debuggers {
     }
 
     private static UUID renderObjectSelector() {
+        if(GameConstants.level == null) return null;
         UUID hoveredObject = null;
-        if(ImGui.button("Add object")) createObjectData = "";
+        if (ImGui.button("Add object")) createObjectData = "";
 
         ImGui.sameLine();
 
         ImVec4 oldColour = ImGui.getStyle().getColor(ImGuiCol.Button);
         ImVec4 selectedColour = ImGui.getStyle().getColor(ImGuiCol.ButtonActive);
-        if(isEnabled("selecting")) ImGui.getStyle().setColor(ImGuiCol.Button, selectedColour.x, selectedColour.y, selectedColour.z, selectedColour.w);
-        if(ImGui.button("Pick Object")) {
+        if (isEnabled("selecting"))
+            ImGui.getStyle().setColor(ImGuiCol.Button, selectedColour.x, selectedColour.y, selectedColour.z, selectedColour.w);
+        if (ImGui.button("Pick Object")) {
             debugOptions.get("selecting").object = !isEnabled("selecting");
         } else {
-            if(debugOptions.get("selecting").object) {
+            if (debugOptions.get("selecting").object) {
                 if (ImGui.isMouseClicked(ImGuiMouseButton.Left)) {
                     selectedObjectId = getHoveredObject() == null ? null : getHoveredObject().getUUID();
                     debugOptions.get("selecting").object = false;
@@ -337,9 +377,9 @@ public class Debuggers {
                 boolean selected = allObject.getUUID().equals(selectedObjectId);
                 if (selected)
                     flags |= ImGuiTreeNodeFlags.Selected;
-                if (ImGui.selectable(allObject.toString() + " ("+id+")", selected, flags))
+                if (ImGui.selectable(allObject.toString() + " (" + id + ")", selected, flags))
                     selectedObjectId = allObject.getUUID();
-                if(ImGui.isItemHovered()) hoveredObject = allObject.getUUID();
+                if (ImGui.isItemHovered()) hoveredObject = allObject.getUUID();
                 ImGui.popID();
 
                 id++;
@@ -378,14 +418,14 @@ public class Debuggers {
                 oldPos = null;
             }
 
-            if(selectedObject instanceof TilesetObject tilesetObject) {
+            if (selectedObject instanceof TilesetObject tilesetObject) {
                 ImGui.separatorText("Custom object data");
 
                 intInput("Width", tilesetObject.getWidth(), tilesetObject::setWidth);
                 intInput("Height", tilesetObject.getHeight(), tilesetObject::setHeight);
             }
 
-            if(ImGui.button("Duplicate")) {
+            if (ImGui.button("Duplicate")) {
                 try {
                     JsonObject data = selectedObject.write();
                     data.addProperty("uuid", UUID.randomUUID().toString());
@@ -399,7 +439,7 @@ public class Debuggers {
 
             ImGui.sameLine();
 
-            if(ImGui.button("Delete")) {
+            if (ImGui.button("Delete")) {
                 GameConstants.level.removeObject(selectedObject);
             }
 
@@ -421,22 +461,23 @@ public class Debuggers {
     }
 
     private static UUID renderLightSelector() {
+        if(GameConstants.level == null) return null;
         UUID hoveredLight = null;
-        if(ImGui.button("Add point light")) {
+        if (ImGui.button("Add point light")) {
             assert GameConstants.level != null;
             GameConstants.level.addLight((rayHandler -> new PointLight(rayHandler, 128)), SaveConfig.ALWAYS);
         }
 
         ImGui.sameLine();
 
-        if(ImGui.button("Add cone light")) {
+        if (ImGui.button("Add cone light")) {
             assert GameConstants.level != null;
             selectedLightId = GameConstants.level.addLight((rayHandler -> new ConeLight(rayHandler, 128, Color.RED, 5, 0, 0, 0, 45)), SaveConfig.ALWAYS).uuid();
         }
 
         ImGui.sameLine();
 
-        if(ImGui.button("Add directional light")) {
+        if (ImGui.button("Add directional light")) {
             assert GameConstants.level != null;
             selectedLightId = GameConstants.level.addLight((rayHandler -> new DirectionalLight(rayHandler, 128, Color.RED, 30)), SaveConfig.ALWAYS).uuid();
         }
@@ -445,11 +486,12 @@ public class Debuggers {
 
         ImVec4 oldColour = ImGui.getStyle().getColor(ImGuiCol.Button);
         ImVec4 selectedColour = ImGui.getStyle().getColor(ImGuiCol.ButtonActive);
-        if(isEnabled("selectingLight")) ImGui.getStyle().setColor(ImGuiCol.Button, selectedColour.x, selectedColour.y, selectedColour.z, selectedColour.w);
-        if(ImGui.button("Pick Light")) {
+        if (isEnabled("selectingLight"))
+            ImGui.getStyle().setColor(ImGuiCol.Button, selectedColour.x, selectedColour.y, selectedColour.z, selectedColour.w);
+        if (ImGui.button("Pick Light")) {
             debugOptions.get("selectingLight").object = !isEnabled("selectingLight");
         } else {
-            if(debugOptions.get("selectingLight").object) {
+            if (debugOptions.get("selectingLight").object) {
                 if (ImGui.isMouseClicked(ImGuiMouseButton.Left)) {
                     selectedLightId = getHoveredLight() == null ? null : getHoveredLight().uuid();
                     debugOptions.get("selectingLight").object = false;
@@ -473,9 +515,9 @@ public class Debuggers {
                 boolean selected = light.uuid().equals(selectedLightId);
                 if (selected)
                     flags |= ImGuiTreeNodeFlags.Selected;
-                if (ImGui.selectable(light.toString() + " ("+id+")", selected, flags))
+                if (ImGui.selectable(light.toString() + " (" + id + ")", selected, flags))
                     selectedLightId = light.uuid();
-                if(ImGui.isItemHovered()) hoveredLight = light.uuid();
+                if (ImGui.isItemHovered()) hoveredLight = light.uuid();
                 ImGui.popID();
 
                 id++;
@@ -519,23 +561,23 @@ public class Debuggers {
                 selectedLight.light().getColor().b,
                 selectedLight.light().getColor().a
             };
-            if(ImGui.colorPicker4("Colour", colours)) {
+            if (ImGui.colorPicker4("Colour", colours)) {
                 selectedLight.light().setColor(colours[0], colours[1], colours[2], colours[3]);
             }
 
-            if(ImGui.checkbox("X-Ray", selectedLight.light().isXray())) {
+            if (ImGui.checkbox("X-Ray", selectedLight.light().isXray())) {
                 selectedLight.light().setXray(!selectedLight.light().isXray());
             }
 
-            if(ImGui.checkbox("Static", selectedLight.light().isStaticLight())) {
+            if (ImGui.checkbox("Static", selectedLight.light().isStaticLight())) {
                 selectedLight.light().setStaticLight(!selectedLight.light().isStaticLight());
             }
 
-            if(ImGui.checkbox("Soft", selectedLight.light().isSoft())) {
+            if (ImGui.checkbox("Soft", selectedLight.light().isSoft())) {
                 selectedLight.light().setSoft(!selectedLight.light().isSoft());
             }
 
-            if(ImGui.checkbox("Active", selectedLight.light().isActive())) {
+            if (ImGui.checkbox("Active", selectedLight.light().isActive())) {
                 selectedLight.light().setActive(!selectedLight.light().isActive());
             }
 
@@ -543,7 +585,7 @@ public class Debuggers {
 
             slider("Distance", selectedLight.light().getDistance(), selectedLight.light()::setDistance, 0, 100, "%.3f");
 
-            if(selectedLight.light() instanceof ConeLight coneLight) {
+            if (selectedLight.light() instanceof ConeLight coneLight) {
                 ImGui.separatorText("Cone Light");
 
                 slider("Direction", selectedLight.light().getDirection(), selectedLight.light()::setDirection, 0, 360, "%.0f");
@@ -551,13 +593,13 @@ public class Debuggers {
                 slider("Cone size", coneLight.getConeDegree(), coneLight::setConeDegree, 0, 180, "%.3f");
             }
 
-            if(selectedLight.light() instanceof DirectionalLight) {
+            if (selectedLight.light() instanceof DirectionalLight) {
                 ImGui.separatorText("Directional Light");
 
                 slider("Direction", selectedLight.light().getDirection(), selectedLight.light()::setDirection, 0, 360, "%.0f");
             }
 
-            if(ImGui.button("Delete")) {
+            if (ImGui.button("Delete")) {
                 GameConstants.level.removeLight(selectedLight);
             }
         }
@@ -565,6 +607,103 @@ public class Debuggers {
         ImGui.endChild();
 
         return hoveredLight;
+    }
+
+    private static void renderSoundPlayer() {
+//        if (ImGui.button("Play new")) soundName = "";
+//
+//        ImGui.beginChild("Left Audio Panel", new ImVec2(300, 0), ImGuiChildFlags.Border | ImGuiChildFlags.ResizeX);
+//        ImGui.separatorText("Active sounds");
+//
+//        if (ImGui.beginTable("Sound Selector", 1, ImGuiTableFlags.RowBg)) {
+//            int id = 0;
+//            for (SoundInstance soundInstance : SoundManager.getActiveSounds()) {
+//                ImGui.tableNextRow();
+//                ImGui.tableNextColumn();
+//                ImGui.pushID(id);
+//                int flags = ImGuiSelectableFlags.SpanAllColumns;
+//                boolean selected = allObject.getUUID().equals(selectedObjectId);
+//                if (selected)
+//                    flags |= ImGuiTreeNodeFlags.Selected;
+//                if (ImGui.selectable(allObject.toString() + " (" + id + ")", selected, flags))
+//                    selectedObjectId = allObject.getUUID();
+//                if (ImGui.isItemHovered()) hoveredObject = allObject.getUUID();
+//                ImGui.popID();
+//
+//                id++;
+//            }
+//            ImGui.endTable();
+//        }
+//
+//        ImGui.endChild();
+//
+//        ImGui.sameLine();
+//
+//        ImGui.beginChild("Right Panel", new ImVec2(0, 0), ImGuiChildFlags.Border);
+//
+//        ImGui.separatorText("Current Object");
+//
+//        AbstractObject selectedObject;
+//        if (selectedObjectId != null && (selectedObject = GameConstants.level.getObjectByUUID(selectedObjectId)) != null) {
+//
+//            Vector2 middle = oldPos == null ? selectedObject.getPos() : oldPos;
+//            int posOffset = 10;
+//
+//            boolean changing = false;
+//            slider("X Pos", selectedObject.getPos().x, selectedObject::setX, middle.x - posOffset, middle.x + posOffset, ImGui.isKeyDown(ImGuiKey.ModAlt) ? "%.0f" : "%.3f");
+//            if (ImGui.isItemActive()) changing = true;
+//            slider("Y Pos", selectedObject.getPos().y, selectedObject::setY, middle.y - posOffset, middle.y + posOffset, ImGui.isKeyDown(ImGuiKey.ModAlt) ? "%.0f" : "%.3f");
+//            if (ImGui.isItemActive()) changing = true;
+//
+//            if (ImGui.button("TP to player")) selectedObject.setPos(GameConstants.player.getPos());
+//            ImGui.sameLine();
+//            if (ImGui.button("TP player to this")) GameConstants.player.setPos(selectedObject.getPos());
+//
+//            if (oldPos == null && changing) {
+//                oldPos = selectedObject.getPos();
+//            }
+//            if (oldPos != null && !changing) {
+//                oldPos = null;
+//            }
+//
+//            if (selectedObject instanceof TilesetObject tilesetObject) {
+//                ImGui.separatorText("Custom object data");
+//
+//                intInput("Width", tilesetObject.getWidth(), tilesetObject::setWidth);
+//                intInput("Height", tilesetObject.getHeight(), tilesetObject::setHeight);
+//            }
+//
+//            if (ImGui.button("Duplicate")) {
+//                try {
+//                    JsonObject data = selectedObject.write();
+//                    data.addProperty("uuid", UUID.randomUUID().toString());
+//                    AbstractObject object = LevelLoader.createObject(data, GameConstants.level);
+//                    assert object != null;
+//                    selectedObjectId = object.getUUID();
+//                } catch (Exception e) {
+//                    Logger.error("Error duplicating object", e);
+//                }
+//            }
+//
+//            ImGui.sameLine();
+//
+//            if (ImGui.button("Delete")) {
+//                GameConstants.level.removeObject(selectedObject);
+//            }
+//
+//            ImGui.separatorText("Data");
+//            if (data != null) {
+//                ImString input = new ImString(data, data.length() + 10000);
+//
+//                ImGui.inputTextMultiline(" ", input, ImGuiInputTextFlags.None);
+//
+//                data = input.get();
+//            }
+//            JsonObject object = selectedObject.write();
+//            data = GsonUtil.PARSER.toJson(object);
+//        }
+//
+//        ImGui.endChild();
     }
 
     private static void intInput(String name, int getter, Consumer<Integer> setter) {
@@ -594,11 +733,11 @@ public class Debuggers {
         ValueHolder<AbstractObject> out = new ValueHolder<>(null);
 
         QueryCallback callback = fixture -> {
-            if(fixture.getBody().getUserData() instanceof AbstractObject object) out.object = object;
+            if (fixture.getBody().getUserData() instanceof AbstractObject object) out.object = object;
             return true;
         };
 
-        GameConstants.level.getBox2dWorld().QueryAABB(callback, point.x-range, point.y-range, point.x+range, point.y+range);
+        GameConstants.level.getBox2dWorld().QueryAABB(callback, point.x - range, point.y - range, point.x + range, point.y + range);
 
         return out.object;
     }
@@ -616,7 +755,7 @@ public class Debuggers {
         ValueHolder<LevelLight> out = new ValueHolder<>(null);
 
         GameConstants.level.getLights().forEach(light -> {
-            if(light.light().getPosition().cpy().sub(point).len() <= range) out.object = light;
+            if (light.light().getPosition().cpy().sub(point).len() <= range) out.object = light;
         });
 
         return out.object;
@@ -633,7 +772,7 @@ public class Debuggers {
     }
 
     public static void log(String s) {
-        if(!GameConstants.DEBUGGING) return;
+        if (!GameConstants.DEBUGGING) return;
         Debuggers.logger.add(s);
     }
 
@@ -646,5 +785,9 @@ public class Debuggers {
 
     public static boolean isEnabled(String noclip) {
         return debugOptions.get(noclip).object;
+    }
+
+    public static boolean shouldTickWorld() {
+        return !GameConstants.DEBUGGING || debugOptions.get("tick").object;
     }
 }

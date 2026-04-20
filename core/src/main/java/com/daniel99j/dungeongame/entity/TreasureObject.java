@@ -31,7 +31,7 @@ public class TreasureObject extends AdvancedObject {
     @Override
     public void onAdd(boolean fromLoad) {
         super.onAdd(fromLoad);
-        this.glow = this.getLevel().addLight((handler) -> new PointLight(handler, 10, Color.valueOf("#FFAF0065"), 2.46f, this.getPos().x, this.getPos().y), SaveConfig.NEVER).light();
+        this.glow = this.getLevel().addLight((handler) -> new PointLight(handler, 10, Color.valueOf("#FFAF0065"), 2.46f, this.getPos().x+0.5f, this.getPos().y+0.5f), SaveConfig.NEVER).light();
         this.glow.setStaticLight(false);
         this.glow.setXray(true);
     }

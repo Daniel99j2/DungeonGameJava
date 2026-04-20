@@ -2,20 +2,26 @@ package com.daniel99j.dungeongame.level;
 
 import box2dLight.Light;
 import box2dLight.RayHandler;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Disposable;
 import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.entity.*;
+import com.daniel99j.dungeongame.sounds.SoundManager;
+import com.daniel99j.dungeongame.ui.Debuggers;
+import com.daniel99j.dungeongame.util.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
 public class Level implements Disposable {
     private final World box2dWorld;
     private float activeTimer;
+    private float tickTimer = 0;
     private final ArrayList<AdvancedObject> advancedObjects = new ArrayList<>();
     private final ArrayList<StaticObject> staticObjects = new ArrayList<>();
     private int time;
@@ -30,16 +36,35 @@ public class Level implements Disposable {
         this.rayHandler.setBlurNum(3);
         RayHandler.useDiffuseLight(true);
         this.rayHandler.setShadows(true);
+
+        SoundManager.getSound("test").playSingle(1, 1, 0, () -> {
+            Logger.info("hi");
+        });
     }
 
     public void tick(float deltaTime) {
         activeTimer += deltaTime;
 
-        if(activeTimer > GameConstants.SECONDS_PER_TICK) while ((activeTimer-=GameConstants.SECONDS_PER_TICK) > 0) {
-            tickWorld();
-            //this.box2dWorld.step(GameConstants.SECONDS_PER_TICK, 6, 2);
+        if (activeTimer > GameConstants.SECONDS_PER_PHYSICS_TICK)
+            while ((activeTimer -= GameConstants.SECONDS_PER_PHYSICS_TICK) > 0) {
+                tickTimer+=GameConstants.SECONDS_PER_PHYSICS_TICK;
+                if(tickTimer >= GameConstants.SECONDS_PER_TICK) {
+                    tickWorld();
+                    tickTimer = 0;
+                }
+                this.box2dWorld.step(GameConstants.SECONDS_PER_PHYSICS_TICK, 6, 2);
+            }
+
+        if(Debuggers.isEnabled("pathfindingRender")) {
+            for (Map.Entry<String, Integer> entry : Debuggers.pathfindDebuggerTimers.entrySet()) {
+                if (entry.getValue() <= 0) {
+                    Debuggers.pathfindDebuggerTimers.remove(entry.getKey());
+                    Debuggers.pathfindDebuggers.remove(entry.getKey());
+                } else {
+                    Debuggers.pathfindDebuggerTimers.replace(entry.getKey(), entry.getValue() - 1);
+                }
+            }
         }
-        this.box2dWorld.step(deltaTime, 6, 2);
     }
 
     public void tickWorld() {
@@ -65,11 +90,12 @@ public class Level implements Disposable {
         for (AbstractObject allObject : this.getAllObjects()) {
             allObject.dispose();
         }
-        for (LevelLight<?> light : this.getLights()) {
-            light.light().dispose();
-        }
         this.rayHandler.dispose();
         this.box2dWorld.dispose();
+
+        GameConstants.player = null;
+
+        if(GameConstants.level == this) GameConstants.level = null;
     }
 
     public World getBox2dWorld() {

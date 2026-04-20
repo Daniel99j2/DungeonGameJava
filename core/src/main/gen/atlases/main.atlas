@@ -13,23 +13,44 @@ repeat: none
   index: -1
 background
   rotate: false
-  xy: 2, 20
+  xy: 2, 278
   size: 512, 512
   orig: 512, 512
   offset: 0, 0
   index: -1
 uiskin
   rotate: false
-  xy: 2, 20
+  xy: 2, 278
   size: 512, 512
   orig: 512, 512
   offset: 0, 0
   index: -1
-coin
+button
   rotate: false
-  xy: 516, 516
+  xy: 260, 260
   size: 16, 16
   orig: 16, 16
+  offset: 0, 0
+  index: -1
+coin
+  rotate: false
+  xy: 516, 756
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+damage_overlay
+  rotate: false
+  xy: 2, 20
+  size: 256, 256
+  orig: 256, 256
+  offset: 0, 0
+  index: -1
+scanner
+  rotate: false
+  xy: 516, 774
+  size: 32, 16
+  orig: 32, 16
   offset: 0, 0
   index: -1
 

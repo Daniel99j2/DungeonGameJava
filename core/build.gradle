@@ -22,7 +22,7 @@ dependencies {
 
   api "com.google.code.gson:gson:2.13.2"
 
-  implementation "com.daniel99j:djutil:1.6.2"
+  implementation "com.daniel99j:djutil:1.6.5"
 
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"

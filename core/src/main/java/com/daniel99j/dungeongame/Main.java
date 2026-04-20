@@ -2,21 +2,29 @@ package com.daniel99j.dungeongame;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.tools.texturepacker.TexturePacker;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.daniel99j.dungeongame.entity.CollisionCategories;
+import com.daniel99j.dungeongame.sounds.SoundManager;
 import com.daniel99j.dungeongame.ui.Debuggers;
 import com.daniel99j.dungeongame.ui.PlayScreen;
 import com.daniel99j.dungeongame.level.LevelLoader;
 import com.daniel99j.dungeongame.util.Logger;
 import com.daniel99j.dungeongame.util.PathUtil;
+import com.daniel99j.dungeongame.util.RenderUtil;
+import com.daniel99j.dungeongame.util.ScheduledRunnables;
+
+import java.util.ArrayList;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Main extends Game {
     @Override
     public void create() {
+        GameConstants.MAIN_INSTANCE = this;
+
         TexturePacker.process(PathUtil.asset("game"), PathUtil.relativize("gen/atlases"), "main");
 
         GameConstants.init();
@@ -30,12 +38,6 @@ public class Main extends Game {
 //        StaticObject wall = new StaticObject("16x");
 //        GameConstants.level.addObject(wall);
 //        wall.setPos(Vector2.One);
-
-        Logger.info(CollisionCategories.LIGHT_BLOCKING);
-        Logger.info(CollisionCategories.PATHFIND_BLOCKING);
-        Logger.info(CollisionCategories.PLAYER);
-        Logger.info(CollisionCategories.ENEMY);
-        Logger.info(CollisionCategories.WALL);
     }
 
     @Override
@@ -47,19 +49,36 @@ public class Main extends Game {
         // Resize your screen here. The parameters represent the new window size.
         GameConstants.viewport.update(width, height, true);
 
+        GameConstants.width = width;
+        GameConstants.height = height;
+
         super.resize(width, height);
     }
 
     @Override
     public void render() {
+        SoundManager.tick(Gdx.graphics.getDeltaTime());
+
         Gdx.input.setCursorCatched(!Debuggers.isDebuggerOpen());
 
         GameConstants.TIME += Gdx.graphics.getDeltaTime();
         ScreenUtils.clear(new Color(0x111111ff));
 
-        assert GameConstants.player != null;
-        GameConstants.camera.position.x = GameConstants.player.getPos().x;
-        GameConstants.camera.position.y = GameConstants.player.getPos().y;
+        //so adding new ones whilst in the list works
+        ArrayList<Runnable> oldRunnables = new ArrayList<>(ScheduledRunnables.runnables);
+        ScheduledRunnables.runnables.clear();
+        for (Runnable runnable : oldRunnables) {
+            runnable.run();
+        }
+        if (Debuggers.isEnabled("freecam")) {
+            GameConstants.camera.position.x = Debuggers.freecam.x;
+            GameConstants.camera.position.y = Debuggers.freecam.y;
+        } else {
+            if(GameConstants.player != null) {
+                GameConstants.camera.position.x = GameConstants.player.getPos().x;
+                GameConstants.camera.position.y = GameConstants.player.getPos().y;
+            }
+        }
         GameConstants.camera.update();
         GameConstants.viewport.apply();
 
@@ -68,13 +87,13 @@ public class Main extends Game {
         GameConstants.shapeRenderer.setProjectionMatrix(GameConstants.camera.combined);
         GameConstants.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         GameConstants.shapeRenderer.setColor(Color.BLACK);
-        GameConstants.shapeRenderer.rect(GameConstants.player.getPos().x-10, GameConstants.player.getPos().y-10, 1000, 1000);
+        GameConstants.shapeRenderer.rect(GameConstants.camera.position.x-10, GameConstants.camera.position.y-10, 1000, 1000);
         GameConstants.shapeRenderer.end();
 
-        GameConstants.spriteBatch.begin();
-
         if(GameConstants.level != null) {
-            GameConstants.getLevelOrThrow().tick(Gdx.graphics.getDeltaTime());
+            GameConstants.spriteBatch.begin();
+            if(Debuggers.shouldTickWorld()) GameConstants.getLevelOrThrow().tick(Gdx.graphics.getDeltaTime());
+            else GameConstants.player.tick();
             GameConstants.getLevelOrThrow().render();
             GameConstants.spriteBatch.end();
 
@@ -87,11 +106,13 @@ public class Main extends Game {
             }
         }
 
-        Debuggers.render();
-
         GameConstants.spriteBatch.begin();
         this.screen.render(Gdx.graphics.getDeltaTime());
         GameConstants.spriteBatch.end();
+
+        Debuggers.render();
+
+        if(Gdx.input.isKeyJustPressed(Input.Keys.F2)) RenderUtil.takeScreenshot();
     }
 
     @Override

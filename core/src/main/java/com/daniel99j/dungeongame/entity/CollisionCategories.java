@@ -1,6 +1,7 @@
 package com.daniel99j.dungeongame.entity;
 
 public class CollisionCategories {
+    public static final short DEFAULT = get();
     public static final short PLAYER = get();
     public static final short ENEMY = get();
     public static final short WALL = get();

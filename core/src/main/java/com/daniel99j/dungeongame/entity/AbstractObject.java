@@ -1,15 +1,19 @@
 package com.daniel99j.dungeongame.entity;
 
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector4;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Disposable;
 import com.daniel99j.djutil.Either;
 import com.daniel99j.djutil.UsageLimited;
+import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.level.Level;
 import com.daniel99j.dungeongame.level.SaveConfig;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Objects;
 import java.util.UUID;
 
 public abstract class AbstractObject implements Disposable {
@@ -151,5 +155,71 @@ public abstract class AbstractObject implements Disposable {
 
     public void setSaveConfig(SaveConfig saveConfig) {
         this.saveConfig = saveConfig;
+    }
+
+    protected void moveTowardTarget(Vector2 targetPosition, float speed) {
+        Vector2 currentPosition = this.getPhysics().getPosition();
+        Vector2 direction = targetPosition.cpy().sub(currentPosition);
+
+        direction.nor();
+
+        this.getPhysics().setLinearVelocity(direction.x * speed, direction.y * speed);
+    }
+
+    public Vector4 getHitbox(Fixture fixture) {
+        if (fixture.getType() == Shape.Type.Polygon && ((PolygonShape) fixture.getShape()).getVertexCount() == 4) {
+            Transform transform = this.getPhysics().getTransform();
+
+            PolygonShape shape = (PolygonShape) fixture.getShape();
+            ArrayList<Vector2> corners = new ArrayList<>();
+
+            // Get world-space corners
+            for (int j = 0; j < shape.getVertexCount(); j++) {
+                Vector2 localVertex = new Vector2();
+                shape.getVertex(j, localVertex);
+
+                Vector2 worldVertex = new Vector2(localVertex);
+                transform.mul(worldVertex); // correct usage
+
+                corners.add(worldVertex);
+            }
+
+            // Compute bounding box
+            float minX = Float.MAX_VALUE;
+            float minY = Float.MAX_VALUE;
+            float maxX = -Float.MAX_VALUE;
+            float maxY = -Float.MAX_VALUE;
+
+            for (Vector2 v : corners) {
+                if (v.x < minX) minX = v.x;
+                if (v.y < minY) minY = v.y;
+                if (v.x > maxX) maxX = v.x;
+                if (v.y > maxY) maxY = v.y;
+            }
+
+            float x = minX;
+            float y = minY;
+            float w = maxX - minX;
+            float h = maxY - minY;
+
+            return new Vector4(x, y, w, h);
+        }
+        throw new IllegalStateException("Invalid physics setting to get hitbox");
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid);
+    }
+
+    public int uniqueHash() {
+        return Objects.hash(level, physics, fromWorldLoad, uuid, removed, saveConfig);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        AbstractObject object = (AbstractObject) o;
+        return uuid.equals(object.uuid);
     }
 }

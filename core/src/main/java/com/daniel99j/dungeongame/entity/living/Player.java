@@ -10,17 +10,25 @@ import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.daniel99j.djutil.NumberUtils;
 import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.entity.*;
+import com.daniel99j.dungeongame.sounds.SoundManager;
 import com.daniel99j.dungeongame.ui.Debuggers;
+import com.daniel99j.dungeongame.util.GlobalRunnables;
+import com.daniel99j.dungeongame.util.Logger;
 import com.daniel99j.dungeongame.util.RenderLayer;
 import com.daniel99j.dungeongame.level.SaveConfig;
+import com.daniel99j.dungeongame.util.ScheduledRunnables;
 import com.google.gson.JsonObject;
+import org.lwjgl.Sys;
 
 public class Player extends AdvancedObject {
+    public static float MAX_HEALTH = 100.0f;
+
     private PointLight light;
+    public float health = MAX_HEALTH;
 
     @Override
     public void tick() {
-        float speed = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) ? 250 : 150;
+        float speed = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) ? 6 : 4;
         float move = Math.max(speed-this.getVelocity().len(), 0);
 
         Vector2 movement = new Vector2(0, 0);
@@ -38,8 +46,14 @@ public class Player extends AdvancedObject {
             movement.add(1, 0);
         };
 
-        if(movement.len() == 1.5) move/=2;
-        this.getPhysics().applyForceToCenter(movement.x*move, movement.y*move, true);
+        //diagonal isnt faster
+        movement.nor();
+
+        if(Debuggers.isEnabled("freecam")) {
+            float mul = 0.25f;
+            Debuggers.freecam.add(new Vector2(movement.x*mul, movement.y*mul));
+        }
+        else if(movement.len() > 0) this.getPhysics().setLinearVelocity(movement.x*move, movement.y*move);
         super.tick();
 
         if(GameConstants.DEBUGGING) {
@@ -88,6 +102,13 @@ public class Player extends AdvancedObject {
         return new Player();
     }
 
+    public void damage(float amount) {
+        health-=amount;
+        SoundManager.getSound("hurt").play(1);
+        if(health <= 0) {
+            ScheduledRunnables.add(GlobalRunnables.FAIL_RUN);
+        }
+    }
 
     @Override
     public ObjectType<Player> getType() {
