@@ -2,9 +2,11 @@ package com.daniel99j.dungeongame.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.FillViewport;
 import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.ui.types.Button;
+import com.daniel99j.dungeongame.util.Logger;
 import com.daniel99j.dungeongame.util.PathUtil;
 import com.daniel99j.dungeongame.util.RenderUtil;
 
@@ -19,7 +21,12 @@ public class YouDiedScreen extends UiScreen {
     @Override
     public void show() {
         super.show();
-        this.addRenderable(new Button(100, 100, 16, 16, "button.png", "Return to camp"));
+        this.addRenderable(new Button(Alignment.MIDDLE_CENTER.offset(-16*5, -16*5), 320, 32, 5, "button.png", "Return to camp") {
+            @Override
+            public void onClick() {
+                Logger.info("clicked");
+            }
+        });
         // Prepare your screen here.
         GameConstants.viewport = new FillViewport(GameConstants.width, GameConstants.height, GameConstants.camera);
         GameConstants.camera.position.x = 0;
@@ -44,7 +51,7 @@ public class YouDiedScreen extends UiScreen {
 
         GameConstants.spriteBatch.draw(backgroundTexture, 0, 0, worldWidth, worldHeight);
 
-        RenderUtil.renderText("<colour:red>The end.", 1, 6, 0.1f);
+        RenderUtil.renderText("<colour:red>The end.", 1, 32, 1f, 1000, Align.right, false);
         super.render(delta);
     }
 

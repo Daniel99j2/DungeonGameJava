@@ -19,6 +19,7 @@ import com.daniel99j.djutil.pathfinder.PathfindDebugPos;
 import com.daniel99j.djutil.pathfinder.PathfindDebugType;
 import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.entity.AbstractObject;
+import com.daniel99j.dungeongame.entity.PositionMarker;
 import com.daniel99j.dungeongame.entity.TilesetObject;
 import com.daniel99j.dungeongame.entity.TreasureObject;
 import com.daniel99j.dungeongame.sounds.SoundInstance;
@@ -81,6 +82,8 @@ public class Debuggers {
             debugOptions.put("disablePathfinding", new ValueHolder<>(false));
             debugOptions.put("freecam", new ValueHolder<>(false));
             debugOptions.put("tick", new ValueHolder<>(true));
+            debugOptions.put("markers", new ValueHolder<>(false));
+            debugOptions.put("invulnerable", new ValueHolder<>(false));
 
             for (FileHandle e : Gdx.files.internal(PathUtil.asset("sounds/")).list()) {
                 audioNames.add(e.name());
@@ -166,7 +169,7 @@ public class Debuggers {
             }
 
             if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
-                GameConstants.level.addObject(new TreasureObject(GlobalRunnables.ADD_TREASURE, "coin", Color.valueOf("#fcb603")));
+                GameConstants.level.addObject(new TreasureObject(GlobalRunnables.COLLECT_TREASURE, "coin", Color.valueOf("#fcb603")));
             }
 
             if (tmpProcessor != null) { // Restore the input processor after ImGui caught all inputs, see #end()
@@ -426,20 +429,25 @@ public class Debuggers {
             }
 
             if (ImGui.button("Duplicate")) {
-                try {
-                    JsonObject data = selectedObject.write();
-                    data.addProperty("uuid", UUID.randomUUID().toString());
-                    AbstractObject object = LevelLoader.createObject(data, GameConstants.level);
-                    assert object != null;
-                    selectedObjectId = object.getUUID();
-                } catch (Exception e) {
-                    Logger.error("Error duplicating object", e);
+                if(selectedObject instanceof PositionMarker m) {
+                    GameConstants.level.addObject(new PositionMarker(m));
+                } else {
+                    try {
+                        JsonObject data = selectedObject.write();
+                        data.addProperty("uuid", UUID.randomUUID().toString());
+                        AbstractObject object = LevelLoader.createObject(data, GameConstants.level);
+                        assert object != null;
+                        selectedObjectId = object.getUUID();
+                    } catch (Exception e) {
+                        Logger.error("Error duplicating object", e);
+                    }
                 }
             }
 
             ImGui.sameLine();
 
             if (ImGui.button("Delete")) {
+                if(selectedObject instanceof PositionMarker p) p.delete();
                 GameConstants.level.removeObject(selectedObject);
             }
 

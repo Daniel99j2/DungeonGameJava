@@ -61,4 +61,11 @@ public class UiScreen implements Screen {
     public void dispose() {
         this.renderables.clear();
     }
+
+    public boolean isUsingMouse() {
+        for (Renderable renderable : this.renderables) {
+            if(renderable.usesMouse) return true;
+        }
+        return false;
+    }
 }

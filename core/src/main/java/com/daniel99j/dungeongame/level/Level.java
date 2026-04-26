@@ -3,11 +3,15 @@ package com.daniel99j.dungeongame.level;
 import box2dLight.Light;
 import box2dLight.RayHandler;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Disposable;
 import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.entity.*;
+import com.daniel99j.dungeongame.mechanic.RunManager;
 import com.daniel99j.dungeongame.sounds.SoundManager;
 import com.daniel99j.dungeongame.ui.Debuggers;
 import com.daniel99j.dungeongame.util.Logger;
@@ -27,6 +31,11 @@ public class Level implements Disposable {
     private int time;
     public RayHandler rayHandler;
     private final ArrayList<LevelLight> lights = new ArrayList<>();
+    protected final ArrayList<Vector2> treasurePositions = new ArrayList<>();
+    protected final ArrayList<Vector2> frostPositions = new ArrayList<>();
+    protected final ArrayList<Vector2> goalPositions = new ArrayList<>();
+    private RunManager runManager = new RunManager();
+    public final ArrayList<ParticleEffect> particles = new ArrayList<>();
 
     public Level() {
         this.box2dWorld = new World(new Vector2(0, 0), true);
@@ -40,6 +49,7 @@ public class Level implements Disposable {
         SoundManager.getSound("test").playSingle(1, 1, 0, () -> {
             Logger.info("hi");
         });
+        runManager.setTreasureToGenerate(100);
     }
 
     public void tick(float deltaTime) {
@@ -65,6 +75,8 @@ public class Level implements Disposable {
                 }
             }
         }
+
+        runManager.tick();
     }
 
     public void tickWorld() {
@@ -83,6 +95,15 @@ public class Level implements Disposable {
             return Float.compare(layer1, layer2);
         });
         objects.forEach(AbstractObject::renderInternal);
+
+        for (ParticleEffect particle : new ArrayList<>(particles)) {
+            if(particle.isComplete()) {
+                particles.remove(particle);
+                particle.dispose();
+            }
+            particle.draw(GameConstants.spriteBatch, Gdx.graphics.getDeltaTime());
+        }
+        GameConstants.spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     @Override
@@ -131,6 +152,9 @@ public class Level implements Disposable {
         for (AbstractObject o : this.getAllObjects()) {
             o.markFromWorldLoad();
         }
+        for (Vector2 treasurePosition : this.treasurePositions) {
+            this.addObject(new PositionMarker(treasurePosition, Color.YELLOW, treasurePositions::remove, treasurePositions::add,"treasure"));
+        }
     }
 
     public int getTime() {
@@ -172,5 +196,9 @@ public class Level implements Disposable {
     public void removeLight(LevelLight<?> light) {
         this.lights.remove(light);
         light.light().remove();
+    }
+
+    public ArrayList<Vector2> getTreasurePositions() {
+        return treasurePositions;
     }
 }

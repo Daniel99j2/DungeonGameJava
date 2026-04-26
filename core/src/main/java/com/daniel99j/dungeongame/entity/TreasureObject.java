@@ -31,9 +31,18 @@ public class TreasureObject extends AdvancedObject {
     @Override
     public void onAdd(boolean fromLoad) {
         super.onAdd(fromLoad);
-        this.glow = this.getLevel().addLight((handler) -> new PointLight(handler, 10, Color.valueOf("#FFAF0065"), 2.46f, this.getPos().x+0.5f, this.getPos().y+0.5f), SaveConfig.NEVER).light();
-        this.glow.setStaticLight(false);
-        this.glow.setXray(true);
+        boolean add = true;
+        for (AdvancedObject advancedObject : this.getLevel().getAdvancedObjects()) {
+            if(advancedObject instanceof TreasureObject t && t.glow != null && t.colour.equals(this.colour) && t.getPos().dst(this.getPos()) < 1.5f) {
+                add = false;
+                break;
+            }
+        }
+        if(add) {
+            this.glow = this.getLevel().addLight((handler) -> new PointLight(handler, 10, Color.valueOf("#FFAF0065"), 2.46f, this.getPos().x + 0.5f, this.getPos().y + 0.5f), SaveConfig.NEVER).light();
+            this.glow.setStaticLight(false);
+            this.glow.setXray(true);
+        }
     }
 
     @Override
@@ -64,7 +73,7 @@ public class TreasureObject extends AdvancedObject {
 
     @Override
     public void dispose() {
-        this.getLevel().removeLight(this.glow);
+        if(this.glow != null) this.getLevel().removeLight(this.glow);
         super.dispose();
     }
 

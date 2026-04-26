@@ -6,7 +6,7 @@ filter: Nearest, Nearest
 repeat: none
 16x
   rotate: false
-  xy: 2, 2
+  xy: 260, 260
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
@@ -27,14 +27,14 @@ uiskin
   index: -1
 button
   rotate: false
-  xy: 260, 260
+  xy: 516, 740
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 coin
   rotate: false
-  xy: 516, 756
+  xy: 550, 774
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
@@ -46,9 +46,16 @@ damage_overlay
   orig: 256, 256
   offset: 0, 0
   index: -1
+particle
+  rotate: false
+  xy: 516, 758
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
 scanner
   rotate: false
-  xy: 516, 774
+  xy: 2, 2
   size: 32, 16
   orig: 32, 16
   offset: 0, 0

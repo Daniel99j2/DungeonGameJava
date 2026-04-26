@@ -11,8 +11,10 @@ public class ObjectTypes {
 
     public static final ObjectType<Player> PLAYER = registerObjectType(new ObjectType<>("player", Player::read));
     public static final ObjectType<SpriteObject> SPRITE = registerObjectType(new ObjectType<>("sprite", SpriteObject::read));
+    public static final ObjectType<PositionMarker> POS_MARKER = registerObjectType(new ObjectType<>("pos_marker", PositionMarker::read));
     public static final ObjectType<TilesetObject> TILESET = registerObjectType(new ObjectType<>("tileset", TilesetObject::read));
     public static final ObjectType<TreasureObject> TREASURE = registerObjectType(new ObjectType<>("treasure", TreasureObject::read));
+    public static final ObjectType<TreasureSpawnerObject> TREASURE_SPAWNER = registerObjectType(new ObjectType<>("treasure_spawner", TreasureSpawnerObject::read));
     public static final ObjectType<Hog> HOG = registerObjectType(new ObjectType<>("hog", Hog::read));
 
     private static <T extends AbstractObject> ObjectType<T> registerObjectType(ObjectType<T> type) {

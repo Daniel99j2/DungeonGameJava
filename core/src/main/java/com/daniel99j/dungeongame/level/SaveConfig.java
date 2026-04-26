@@ -6,5 +6,6 @@ public enum SaveConfig {
     BETWEEN_SESSIONS,
     NEVER,
     MERGE_IF_EXISTS,
-    REPLACE_IF_EXISTS
+    REPLACE_IF_EXISTS,
+    MAP_SAVE
 }

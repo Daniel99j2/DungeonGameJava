@@ -15,6 +15,7 @@ import com.google.gson.JsonObject;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.UUID;
+import java.util.Vector;
 
 public class LevelLoader {
     public static Level loadFromData(String name) {
@@ -41,6 +42,9 @@ public class LevelLoader {
         }));
         levelObject.get("lights").getAsJsonArray().forEach((jsonElement -> {
             createLight(jsonElement.getAsJsonObject(), out);
+        }));
+        levelObject.get("treasure_generators").getAsJsonArray().forEach((jsonElement -> {
+            out.treasurePositions.add(GsonUtil.fromJson(jsonElement));
         }));
         return out;
     }
@@ -103,7 +107,7 @@ public class LevelLoader {
 
         JsonArray objects = new JsonArray();
         for (AbstractObject allObject : level.getAllObjects()) {
-            objects.add(allObject.write());
+            if(!allObject.getSaveConfig().equals(SaveConfig.NEVER)) objects.add(allObject.write());
         }
 
         out.add("objects", objects);
@@ -115,6 +119,13 @@ public class LevelLoader {
         }
 
         out.add("lights", lights);
+
+        JsonArray treasure = new JsonArray();
+        for (Vector2 v : level.treasurePositions) {
+            treasure.add(GsonUtil.toJson(v));
+        }
+
+        out.add("treasure_generators", treasure);
 
         return GsonUtil.PARSER.toJson(out);
     }

@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Cursor;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
+import com.badlogic.gdx.utils.Align;
 import com.daniel99j.djutil.MiscUtils;
 import com.daniel99j.dungeongame.GameConstants;
 
@@ -28,7 +29,7 @@ public class RenderUtil {
         pixmap.dispose();
     }
 
-    public static void renderText(String text, int x, int y, float size) {
+    public static void renderText(String text, int x, int y, float size, int width, int align, boolean wrap) {
         GameConstants.FONT.getData().setScale(size);
 
         String newText = text.replace("[", "[[");
@@ -36,6 +37,6 @@ public class RenderUtil {
             String data = MiscUtils.getTextBetween(newText, "<colour:", ">");
             newText = newText.replace("<colour:"+data+">", "["+data.toUpperCase()+"]");
         }
-        GameConstants.FONT.draw(GameConstants.spriteBatch, newText, x, y);
+        GameConstants.FONT.draw(GameConstants.spriteBatch, newText, x, y, width, align, wrap);
     }
 }

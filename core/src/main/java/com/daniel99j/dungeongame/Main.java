@@ -3,21 +3,26 @@ package com.daniel99j.dungeongame;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.tools.texturepacker.TexturePacker;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.daniel99j.dungeongame.entity.CollisionCategories;
+import com.daniel99j.dungeongame.entity.PositionMarker;
 import com.daniel99j.dungeongame.sounds.SoundManager;
 import com.daniel99j.dungeongame.ui.Debuggers;
 import com.daniel99j.dungeongame.ui.PlayScreen;
 import com.daniel99j.dungeongame.level.LevelLoader;
+import com.daniel99j.dungeongame.ui.UiScreen;
 import com.daniel99j.dungeongame.util.Logger;
 import com.daniel99j.dungeongame.util.PathUtil;
 import com.daniel99j.dungeongame.util.RenderUtil;
 import com.daniel99j.dungeongame.util.ScheduledRunnables;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Main extends Game {
@@ -59,7 +64,7 @@ public class Main extends Game {
     public void render() {
         SoundManager.tick(Gdx.graphics.getDeltaTime());
 
-        Gdx.input.setCursorCatched(!Debuggers.isDebuggerOpen());
+        Gdx.input.setCursorCatched(!(Debuggers.isDebuggerOpen() || (this.getScreen() instanceof UiScreen ui && ui.isUsingMouse())));
 
         GameConstants.TIME += Gdx.graphics.getDeltaTime();
         ScreenUtils.clear(new Color(0x111111ff));

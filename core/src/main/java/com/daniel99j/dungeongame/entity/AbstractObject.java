@@ -19,10 +19,11 @@ import java.util.UUID;
 public abstract class AbstractObject implements Disposable {
     private Level level;
     private Either<PositionHolder, Body> physics;
+    private Vector2 beforeLoadPos = null;
     private boolean fromWorldLoad = false;
     private UUID uuid;
     private boolean removed = false;
-    private SaveConfig saveConfig;
+    private SaveConfig saveConfig = SaveConfig.ALWAYS;
 
     public AbstractObject() {
     }
@@ -46,6 +47,8 @@ public abstract class AbstractObject implements Disposable {
         } else {
             this.physics = Either.left(new PositionHolder());
         }
+        if(this.beforeLoadPos != null) this.setPos(this.beforeLoadPos);
+        this.beforeLoadPos = null;
         if(!fromLoad) this.uuid = UUID.randomUUID();
         if(!fromLoad) onAdd(false);
     }
@@ -77,13 +80,15 @@ public abstract class AbstractObject implements Disposable {
 
     public Vector2 getPos() {
         if(this.removed) return new Vector2();
+        if(this.physics == null) return this.beforeLoadPos.cpy();
         if(this.physics.isRight()) return this.physics.getRight().getPosition().cpy();
         else if(this.physics.isLeft()) return this.physics.getLeft().pos.cpy();
         throw new IllegalStateException();
     }
 
     public void setPos(Vector2 pos) {
-        if(this.physics.isRight()) this.physics.getRight().setTransform(pos.x, pos.y, 0);
+        if(this.physics == null) this.beforeLoadPos = pos.cpy();
+        else if(this.physics.isRight()) this.physics.getRight().setTransform(pos.x, pos.y, 0);
         else if(this.physics.isLeft()) this.physics.getLeft().pos = pos.cpy();
     }
 

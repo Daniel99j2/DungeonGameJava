@@ -103,6 +103,7 @@ public class Player extends AdvancedObject {
     }
 
     public void damage(float amount) {
+        if(Debuggers.isEnabled("invulnerable")) return;
         health-=amount;
         SoundManager.getSound("hurt").play(1);
         if(health <= 0) {

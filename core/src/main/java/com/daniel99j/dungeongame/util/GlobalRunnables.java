@@ -12,8 +12,8 @@ public class GlobalRunnables {
     public static final Map<String, Runnable> nameToCode = new HashMap<>();
     public static final Map<Runnable, String> codeToName = new HashMap<>();
 
-    public static final Runnable ADD_FROST_EMBER = register("add_frost_ember", () -> {});
-    public static final Runnable ADD_TREASURE = register("add_treasure", () -> {
+    public static final Runnable COLLECT_FROST_EMBER = register("collect_frost_ember", () -> {});
+    public static final Runnable COLLECT_TREASURE = register("collect_treasure", () -> {
         SoundManager.getSound("coin").play(1);
     });
     public static final Runnable FAIL_RUN = register("fail_run", () -> {
@@ -21,6 +21,9 @@ public class GlobalRunnables {
         GameConstants.level.dispose();
         GameConstants.level = null;
         GameConstants.MAIN_INSTANCE.setScreen(new YouDiedScreen());
+    });
+    public static final Runnable SPAWN_TREASURE = register("spawn_treasure", () -> {
+
     });
 
     private static Runnable register(String name, Runnable code) {
