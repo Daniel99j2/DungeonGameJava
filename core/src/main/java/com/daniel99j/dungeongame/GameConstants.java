@@ -33,6 +33,7 @@ public class GameConstants {
     public static final OrthographicCamera camera = new OrthographicCamera();
     public static Viewport viewport = new FitViewport(16, 9, camera);
     public static final TextureAtlas atlas = new TextureAtlas(Gdx.files.internal(PathUtil.relativize("gen/atlases/main.atlas")));
+    public static final TextureAtlas uiAtlas = new TextureAtlas(Gdx.files.internal(PathUtil.relativize("gen/atlases/ui.atlas")));
     public static @Nullable Player player;
     public static final boolean DEBUGGING = Objects.equals(System.getenv("DEBUGGING_GAME"), "1");
     public static final ShapeRenderer shapeRenderer = new ShapeRenderer();

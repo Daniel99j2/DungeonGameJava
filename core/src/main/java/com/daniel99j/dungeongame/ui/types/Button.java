@@ -14,6 +14,7 @@ import com.daniel99j.dungeongame.util.RenderUtil;
 public class Button extends Renderable {
     private int width, height;
     private NinePatch ninePatch;
+    private NinePatch ninePatchHovered;
     private String text;
     private float scale;
 
@@ -24,6 +25,7 @@ public class Button extends Renderable {
         this.height = height;
         this.scale = scale;
         this.ninePatch = NinePatchLoader.getNinePatch(texture.replace(".png", ""));
+        this.ninePatchHovered = NinePatchLoader.getNinePatch(texture.replace(".png", "")+"_hovered");
         this.usesMouse = true;
     }
 
@@ -31,7 +33,8 @@ public class Button extends Renderable {
     public void render(RenderState state) {
         super.render(state);
         GameConstants.spriteBatch.setColor(Color.WHITE);
-        this.ninePatch.draw(GameConstants.spriteBatch, this.getX(), GameConstants.height-this.getY()-(this.height*scale), 0, 0, this.width, this.height ,scale ,scale ,0);
+        NinePatch patch = this.isHovered() ? this.ninePatchHovered : this.ninePatch;
+        patch.draw(GameConstants.spriteBatch, this.getX(), GameConstants.height-this.getY()-(this.height*scale), 0, 0, this.width, this.height ,scale ,scale ,0);
         if(!this.text.isBlank()) RenderUtil.renderText(this.text, (int) (this.getX()), GameConstants.height-(int) (this.getY()+this.height*scale*0.5f), 1f, (int) (this.width*scale), Align.center, false);
     }
 

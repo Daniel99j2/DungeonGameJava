@@ -12,6 +12,11 @@ public class Renderable {
     public boolean isLeftDown = false;
     public boolean isMiddleDown = false;
     public boolean isRightDown = false;
+    private boolean hovered;
+
+    public boolean isHovered() {
+        return hovered;
+    }
 
     public boolean capturingMouse() {
         return false;
@@ -23,7 +28,9 @@ public class Renderable {
 
     public void render(RenderState state) {
         if(usesMouse) {
+            hovered = false;
             if(isInRange(state.mouseX(), state.mouseY())) {
+                hovered = true;
                 if (!isLeftDown && state.leftJust()) {
                     onDown(state.mouseX() - this.getX(), state.mouseY() - this.getY(), ClickType.LEFT);
                     isLeftDown = true;

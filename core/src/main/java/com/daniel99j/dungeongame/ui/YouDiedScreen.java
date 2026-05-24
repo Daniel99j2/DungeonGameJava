@@ -21,7 +21,7 @@ public class YouDiedScreen extends UiScreen {
     @Override
     public void show() {
         super.show();
-        this.addRenderable(new Button(Alignment.MIDDLE_CENTER.offset(-16*5, -16*5), 320, 32, 5, "button.png", "Return to camp") {
+        this.addRenderable(new Button(Alignment.MIDDLE_CENTER.offset(-16*5, -16*5), 320, 32, 5, "button", "Return to camp") {
             @Override
             public void onClick() {
                 Logger.info("clicked");
@@ -36,7 +36,7 @@ public class YouDiedScreen extends UiScreen {
 
     @Override
     public void render(float delta) {
-        GameConstants.spriteBatch.end();
+        GameConstants.spriteBatch.begin();
         // Draw your screen here. "delta" is the time since last render in seconds.
         GameConstants.camera.update();
             GameConstants.viewport.apply();
@@ -45,14 +45,13 @@ public class YouDiedScreen extends UiScreen {
         float worldWidth = GameConstants.viewport.getWorldWidth();
         float worldHeight = GameConstants.viewport.getWorldHeight();
 
-        GameConstants.spriteBatch.begin();
-
         GameConstants.spriteBatch.setColor(Color.RED);
 
         GameConstants.spriteBatch.draw(backgroundTexture, 0, 0, worldWidth, worldHeight);
 
         RenderUtil.renderText("<colour:red>The end.", 1, 32, 1f, 1000, Align.right, false);
         super.render(delta);
+        GameConstants.spriteBatch.end();
     }
 
     @Override

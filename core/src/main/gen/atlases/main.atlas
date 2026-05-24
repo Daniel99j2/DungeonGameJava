@@ -25,16 +25,9 @@ uiskin
   orig: 512, 512
   offset: 0, 0
   index: -1
-button
-  rotate: false
-  xy: 516, 740
-  size: 16, 16
-  orig: 16, 16
-  offset: 0, 0
-  index: -1
 coin
   rotate: false
-  xy: 550, 774
+  xy: 516, 740
   size: 16, 16
   orig: 16, 16
   offset: 0, 0

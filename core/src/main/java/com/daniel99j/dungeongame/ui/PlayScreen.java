@@ -23,8 +23,10 @@ public class PlayScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        GameConstants.spriteBatch.begin();
         // Draw your screen here. "delta" is the time since last render in seconds.
         GameConstants.spriteBatch.draw(GameConstants.atlas.findRegion("background"), 0, 0, 1, 1);
+        GameConstants.spriteBatch.end();
     }
 
     @Override

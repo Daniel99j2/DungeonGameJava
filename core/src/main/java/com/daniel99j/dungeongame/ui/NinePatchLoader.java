@@ -19,8 +19,8 @@ public class NinePatchLoader {
     public static NinePatch getNinePatch(String name) {
         if(patches.containsKey(name)) return patches.get(name);
         try {
-            JsonObject data = GsonUtil.parse(Files.readString(Paths.get(PathUtil.asset("game/"+name+".json")).toAbsolutePath()));
-            NinePatch patch = new NinePatch(GameConstants.atlas.findRegion(name), data.get("left").getAsInt(), data.get("right").getAsInt(), data.get("top").getAsInt(), data.get("bottom").getAsInt());
+            JsonObject data = GsonUtil.parse(Files.readString(Paths.get(PathUtil.asset("ui/"+name+".json")).toAbsolutePath()));
+            NinePatch patch = new NinePatch(GameConstants.uiAtlas.findRegion(name), data.get("left").getAsInt(), data.get("right").getAsInt(), data.get("top").getAsInt(), data.get("bottom").getAsInt());
             patches.put(name, patch);
             return patch;
         } catch (Exception e) {

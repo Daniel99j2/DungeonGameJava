@@ -28,9 +28,11 @@ import java.util.List;
 public class Main extends Game {
     @Override
     public void create() {
-        GameConstants.MAIN_INSTANCE = this;
-
         TexturePacker.process(PathUtil.asset("game"), PathUtil.relativize("gen/atlases"), "main");
+        TexturePacker.process(PathUtil.asset("ui"), PathUtil.relativize("gen/atlases"), "ui");
+
+        //dont load it before texture packer else it will crash
+        GameConstants.MAIN_INSTANCE = this;
 
         GameConstants.init();
         GameConstants.viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
@@ -51,11 +53,11 @@ public class Main extends Game {
         // In that case, we don't resize anything, and wait for the window to be a normal size before updating.
         if(width <= 0 || height <= 0) return;
 
-        // Resize your screen here. The parameters represent the new window size.
-        GameConstants.viewport.update(width, height, true);
-
         GameConstants.width = width;
         GameConstants.height = height;
+
+        // Resize your screen here. The parameters represent the new window size.
+        GameConstants.viewport.update(width, height, true);
 
         super.resize(width, height);
     }
@@ -97,6 +99,7 @@ public class Main extends Game {
 
         if(GameConstants.level != null) {
             GameConstants.spriteBatch.begin();
+            GameConstants.spriteBatch.enableBlending();
             if(Debuggers.shouldTickWorld()) GameConstants.getLevelOrThrow().tick(Gdx.graphics.getDeltaTime());
             else GameConstants.player.tick();
             GameConstants.getLevelOrThrow().render();
@@ -111,9 +114,7 @@ public class Main extends Game {
             }
         }
 
-        GameConstants.spriteBatch.begin();
         this.screen.render(Gdx.graphics.getDeltaTime());
-        GameConstants.spriteBatch.end();
 
         Debuggers.render();
 

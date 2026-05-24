@@ -33,7 +33,6 @@ public class TilesetObject extends StaticObject {
     public void render() {
         for (float x = 0; x < this.width*this.size.x; x+=this.size.x) {
             for (float y = 0; y < this.height*this.size.y; y+=this.size.y) {
-                GameConstants.spriteBatch.enableBlending();
                 //slightly more so that it doesnt have seams
                 GameConstants.spriteBatch.draw(GameConstants.atlas.findRegion(sprite), this.getPos().x+x, this.getPos().y+y, this.size.x+0.0001f, this.size.y+0.0001f);
             }
