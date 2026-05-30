@@ -74,4 +74,8 @@ public class Renderable {
     public int getY() {
         return this.alignment.getY();
     }
+
+    public CursorType getCursorOverride() {
+        return null;
+    }
 }

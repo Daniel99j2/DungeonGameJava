@@ -1,9 +1,7 @@
 package com.daniel99j.dungeongame;
 
-import com.badlogic.gdx.Game;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.*;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
@@ -16,18 +14,60 @@ import com.daniel99j.dungeongame.ui.Debuggers;
 import com.daniel99j.dungeongame.ui.PlayScreen;
 import com.daniel99j.dungeongame.level.LevelLoader;
 import com.daniel99j.dungeongame.ui.UiScreen;
+import com.daniel99j.dungeongame.ui.renderable.CursorType;
 import com.daniel99j.dungeongame.util.Logger;
 import com.daniel99j.dungeongame.util.PathUtil;
 import com.daniel99j.dungeongame.util.RenderUtil;
 import com.daniel99j.dungeongame.util.ScheduledRunnables;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWErrorCallback;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
+/** {@link ApplicationListener} implementation shared by all platforms. */
 public class Main extends Game {
+    private CursorType oldCursor = CursorType.NORMAL;
+    private boolean cursorCaught = false;
+    private GLFWErrorCallback glfwErrorCallback;
+
     @Override
     public void create() {
+        glfwErrorCallback = GLFWErrorCallback.createPrint(new PrintStream(new OutputStream() {
+            private final StringBuilder buffer = new StringBuilder();
+
+            @Override
+            public void write(int b) {
+                if (b == '\n') {
+                    flushBuffer();
+                } else if (b != '\r') {
+                    buffer.append((char) b);
+                }
+            }
+
+            @Override
+            public void write(byte[] b, int off, int len) {
+                for (int i = off; i < off + len; i++) {
+                    write(b[i]);
+                }
+            }
+
+            @Override
+            public void flush() {
+                flushBuffer();
+            }
+
+            private void flushBuffer() {
+                if (!buffer.isEmpty()) {
+                    Logger.error(buffer.toString());
+                    buffer.setLength(0);
+                }
+            }
+        }, true));
+        glfwErrorCallback.set();
+
         TexturePacker.process(PathUtil.asset("game"), PathUtil.relativize("gen/atlases"), "main");
         TexturePacker.process(PathUtil.asset("ui"), PathUtil.relativize("gen/atlases"), "ui");
 
@@ -66,7 +106,21 @@ public class Main extends Game {
     public void render() {
         SoundManager.tick(Gdx.graphics.getDeltaTime());
 
-        Gdx.input.setCursorCatched(!(Debuggers.isDebuggerOpen() || (this.getScreen() instanceof UiScreen ui && ui.isUsingMouse())));
+        boolean cursorShouldBeCaught = !(Debuggers.isDebuggerOpen() || (this.getScreen() instanceof UiScreen ui && ui.isUsingMouse()));
+        if(cursorShouldBeCaught != cursorCaught) {
+            Gdx.input.setCursorCatched(cursorShouldBeCaught);
+            cursorCaught = cursorShouldBeCaught;
+        }
+
+        CursorType newCursor = CursorType.NORMAL;
+        CursorType uiCursor;
+        if(this.getScreen() instanceof UiScreen ui && (uiCursor = ui.getCursorType()) != null) {
+            newCursor = uiCursor;
+        }
+        if(oldCursor != newCursor && !Debuggers.isDebuggerOpen()) {
+            GLFW.glfwSetCursor(((Lwjgl3Graphics) Gdx.graphics).getWindow().getWindowHandle(), newCursor.getId());
+            oldCursor = newCursor;
+        }
 
         GameConstants.TIME += Gdx.graphics.getDeltaTime();
         ScreenUtils.clear(new Color(0x111111ff));
@@ -127,5 +181,12 @@ public class Main extends Game {
         Debuggers.dispose();
         GameConstants.shapeRenderer.dispose();
         GameConstants.spriteBatch.dispose();
+        for (CursorType value : CursorType.values()) {
+            GLFW.glfwDestroyCursor(value.getId());
+        }
+        if (glfwErrorCallback != null) {
+            glfwErrorCallback.free();
+            glfwErrorCallback = null;
+        }
     }
 }

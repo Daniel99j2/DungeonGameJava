@@ -3,6 +3,7 @@ package com.daniel99j.dungeongame.util;
 import com.daniel99j.dungeongame.ui.Debuggers;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.Sys;
+import org.lwjgl.glfw.GLFWErrorCallback;
 
 import java.io.*;
 

@@ -7,9 +7,11 @@ import com.daniel99j.dungeongame.GameConstants;
 import com.daniel99j.dungeongame.ui.Alignment;
 import com.daniel99j.dungeongame.ui.NinePatchLoader;
 import com.daniel99j.dungeongame.ui.renderable.ClickType;
+import com.daniel99j.dungeongame.ui.renderable.CursorType;
 import com.daniel99j.dungeongame.ui.renderable.RenderState;
 import com.daniel99j.dungeongame.ui.renderable.Renderable;
 import com.daniel99j.dungeongame.util.RenderUtil;
+import org.lwjgl.glfw.GLFW;
 
 public class Button extends Renderable {
     private int width, height;
@@ -50,5 +52,10 @@ public class Button extends Renderable {
 
     public void onClick() {
 
+    }
+
+    @Override
+    public CursorType getCursorOverride() {
+        return this.isHovered() ? CursorType.HAND_POINT : null;
     }
 }

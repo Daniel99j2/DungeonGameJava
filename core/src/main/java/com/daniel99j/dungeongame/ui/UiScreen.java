@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.daniel99j.dungeongame.ui.renderable.CursorType;
 import com.daniel99j.dungeongame.ui.renderable.RenderState;
 import com.daniel99j.dungeongame.ui.renderable.Renderable;
 
@@ -67,5 +68,13 @@ public class UiScreen implements Screen {
             if(renderable.usesMouse) return true;
         }
         return false;
+    }
+
+    public CursorType getCursorType() {
+        for (Renderable renderable : this.renderables) {
+            CursorType c = renderable.getCursorOverride();
+            if(renderable.usesMouse && c != null) return c;
+        }
+        return null;
     }
 }

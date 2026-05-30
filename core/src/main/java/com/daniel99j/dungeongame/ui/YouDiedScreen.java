@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.FillViewport;
 import com.daniel99j.dungeongame.GameConstants;
+import com.daniel99j.dungeongame.sounds.SoundManager;
 import com.daniel99j.dungeongame.ui.types.Button;
 import com.daniel99j.dungeongame.util.Logger;
 import com.daniel99j.dungeongame.util.PathUtil;
@@ -24,6 +25,7 @@ public class YouDiedScreen extends UiScreen {
         this.addRenderable(new Button(Alignment.MIDDLE_CENTER.offset(-16*5, -16*5), 320, 32, 5, "button", "Return to camp") {
             @Override
             public void onClick() {
+                SoundManager.getSound("click").playSingle(1);
                 Logger.info("clicked");
             }
         });
